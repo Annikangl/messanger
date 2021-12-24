@@ -11,9 +11,9 @@ use Ratchet\ConnectionInterface;
 
 class ChatSocket extends BaseSocket
 {
-    protected $clients;
-    protected $message;
-    protected $audioClients;
+    protected \SplObjectStorage $clients;
+    protected MessageController $message;
+    protected array $audioClients;
     public $call = null;
 
     protected $caller = null;
@@ -99,7 +99,8 @@ class ChatSocket extends BaseSocket
             value('socket_id');
     }
 
-    public function sendMessage($data) {
+    public function sendMessage($data): void
+    {
         $receiverIds = $this->getSocketIdByChatRoom($data['sender_id'], $data['receiver_id']);
         $message = $this->message->store($data);
 
@@ -110,7 +111,7 @@ class ChatSocket extends BaseSocket
             "username" => $message->username,
             "audio" => $message->audio,
             "chat_room_id" => $message->chat_room_id,
-            "created_at" => date('H:i', strtotime($message->created_at))
+            "created_at" => $message->created_at
         ];
 
         foreach ($this->clients as $client) {
@@ -164,7 +165,6 @@ class ChatSocket extends BaseSocket
 
 //        Receiver user accepted the call
         if ($data['status'] === 200) {
-
             $receiverId = $this->getSocketIdByUser($this->callerId);
             $responseData = [
                 "status" => $data['status']
@@ -179,30 +179,25 @@ class ChatSocket extends BaseSocket
         }
 
         if ($data['status'] === 201) {
-
+            // Эту хуйню перенести выше, она КАЖДЫЙ РАЗ вычисляется, пздц
             $receiver = array_filter($this->audioClients, function ($id) use ($data) {
-                return $id != $data['sender_id'];
+                return $id !== $data['sender_id'];
             }, ARRAY_FILTER_USE_KEY);
 
-            $receiver = array_values($receiver);
+            $receiver = reset($receiver);
 
             $responseData = [
                 "type" => 'call',
                 "sender_id" =>  $this->getSocketIdByUser($data['sender_id']),
-                "receiver_id" => $receiver[0],
+                "receiver_id" => $receiver,
                 "voice_audio" => $data['voice_audio']
             ];
 
-//            foreach ($this->clients as $client) {
-//                if ($client->resourceId === $this->receiverSocketId) {
-//                    dump('Sending voice from ' . $responseData['receiver_id'] . ' to ' . $responseData['sender_id']);
-//                    $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
-//                }
-//            }
             $this->sendVoiceCall($responseData);
         }
 
-        if ($data['status'] == 400) {
+        if ($data['status'] === 400 || $data['status'] === 450) {
+            dump($data);
             $responseData = [
                 "status" => $data['status']
             ];
@@ -211,7 +206,7 @@ class ChatSocket extends BaseSocket
 
             foreach ($this->clients as $client) {
                 foreach ($this->audioClients as $receiver) {
-                    if ($client->resourceId == $receiver) {
+                    if ($client->resourceId === $receiver) {
                         dump('Close call ' . $receiver);
                         $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
                     }
@@ -220,10 +215,12 @@ class ChatSocket extends BaseSocket
         }
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function sendVoiceCall($data)
     {
-//        $receiverId = $this->getSocketIdByReceiver($data['receiver_id']);
-        $receiverId = $data['receiver_id'];
+        $receiverId ??= $data['receiver_id'];
 
         $responseData = [
             'type' => $data['type'],
@@ -232,12 +229,16 @@ class ChatSocket extends BaseSocket
             'voice_audio' => $data['voice_audio']
         ];
 
-        foreach ($this->clients as $client) {
-            if ($client->resourceId === $receiverId) {
-                dump('Sending voice from ' . $responseData['receiver_id'] . ' to ' . $responseData['sender_id']);
-                $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
+        if ($receiverId) {
+            foreach ($this->clients as $client) {
+                if ($client->resourceId === $receiverId) {
+                    dump('Sending voice from ' . $responseData['receiver_id'] . ' to ' . $responseData['sender_id']);
+                    $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
+                }
             }
         }
+
+
     }
 }
 
