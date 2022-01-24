@@ -7,11 +7,10 @@ use App\Exceptions\MessageException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMessageRequest;
 use App\Models\Message;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use League\Flysystem\FileExistsException;
+
 
 
 class MessageController extends Controller
@@ -31,8 +30,8 @@ class MessageController extends Controller
             ->select('messages.sender_id as sender_id', 'messages.message','messages.audio',
                     DB::raw("DATE_FORMAT(messages.created_at, '%h:%i') as created_at"))
             ->where('messages.chat_room_id', [$chatRoomId])
-            ->orderBy('messages.created_at')
-            ->get();
+            ->orderBy('messages.created_at', 'DESC')
+            ->simplePaginate(15);
 
         foreach ($dialog as $key => $conversation) {
             if (!is_null($conversation->audio)) {
@@ -40,17 +39,22 @@ class MessageController extends Controller
             }
         }
 
-//        TODO value
         $receiver_id = DB::table('users_chat_rooms')
             ->select('user_id as receiver_id')
             ->where('users_chat_rooms.chat_room_id',[$chatRoomId])
             ->where('users_chat_rooms.user_id', '<>',[$userId])
-            ->first();
+            ->value('receiver_id');
+
 
         return response()->json([
             "status" => true,
             "receiver_id" => $receiver_id,
-            "dialog" => $dialog
+            "dialog" => array_reverse($dialog->toArray()['data']),
+            "pagination" => [
+                'currentPage' => $dialog->currentPage(),
+                'next_page_url' => $dialog->nextPageUrl(),
+                'last_page_url' => $dialog->previousPageUrl()
+            ]
         ])->setStatusCode(200);
     }
 

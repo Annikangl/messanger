@@ -32,7 +32,7 @@ class ChatRoomController extends Controller
                         ->join('chat_rooms', 'users_chat_rooms.chat_room_id', 'chat_rooms.id')
                         ->join('users', 'users_chat_rooms.user_id', 'users.id')
                         ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-                        ->select('chat_rooms.id', 'chat_rooms.title','messages.message AS last_message')
+                        ->select('chat_rooms.id', 'chat_rooms.title','messages.message AS last_message','messages.updated_at')
                         ->whereNotIn('users.username',[1,3])
                         ->where('users.id', $id)
                         ->whereIn('messages.id', function ($query) {

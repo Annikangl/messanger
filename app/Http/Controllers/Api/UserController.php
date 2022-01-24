@@ -4,18 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\UserNotFoundExceprion;
 use App\Http\Controllers\Controller;
+use App\Models\Friends;
 use App\Models\User;
+use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
+    private $userQueries;
+
+    public function __construct(UserQueries $userQueries)
+    {
+        $this->userQueries = $userQueries;
+    }
 
     /**
      * @throws UserNotFoundExceprion
      */
     public function show(int $id)
     {
-        $user = User::find($id);
+        $user = $this->userQueries->getById($id);
 
         if (!$user) {
             throw new UserNotFoundExceprion('User not found');
@@ -31,13 +39,16 @@ class UserController extends Controller
      * Get user friends by userId
      * @throws UserNotFoundExceprion
      */
-    public function friends(int $id)
+    public function friends(int $id): \Illuminate\Http\JsonResponse
     {
-        $friends = DB::table('users_friends')
-                        ->join('users', 'users_friends.friend_id', 'users.id')
-                        ->select('users_friends.friend_id as id','users.username', 'users.email', 'users.avatar', 'users.last_login')
-                        ->where('users_friends.user_id', $id)
-                        ->get();
+
+        $friends = $this->userQueries->getUserFriends($id);
+
+//        $friends = DB::table('users_friends')
+//                        ->join('users', 'users_friends.friend_id', 'users.id')
+//                        ->select('users_friends.friend_id as id','users.username', 'users.email', 'users.avatar', 'users.last_login')
+//                        ->where('users_friends.user_id', $id)
+//                        ->get();
 
         if ($friends->isEmpty()) {
             throw new UserNotFoundExceprion('Friends not found');
@@ -54,11 +65,7 @@ class UserController extends Controller
      */
     public function searchUser(int $userId, string $username): \Illuminate\Http\JsonResponse
     {
-        $user = Db::table('users')
-                ->select('id','username','avatar','active','last_login')
-                ->where('username', 'LIKE','%'.$username.'%')
-                ->whereNotIn('id',[$userId])
-                ->get();
+        $user = $this->userQueries->getByUsername($username, $userId);
 
         if ($user->isEmpty()) {
             throw new UserNotFoundExceprion('User not found by username ' . $username);
