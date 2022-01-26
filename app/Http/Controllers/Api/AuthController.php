@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Testing\Fluent\Concerns\Has;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
+
 
 class AuthController extends Controller
 {

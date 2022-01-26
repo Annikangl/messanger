@@ -5,55 +5,35 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\ChatNotCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreChatroomRequest;
-use App\Models\ChatRoom;
-use App\Models\UserChatRoom;
-use Illuminate\Database\QueryException;
-use Illuminate\Http\Request;
+use App\Repositories\Interfaces\ChatRoomQueries;
+use Illuminate\Http\JsonResponse;
 Use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+
 
 class ChatRoomController extends Controller
 {
-    public $usersChatRoom;
-    public $message;
+    public UserChatRoomController $usersChatRoom;
+    public MessageController $message;
+    private ChatRoomQueries $chatRoomQueries;
 
     public function __construct()
     {
-        $this->usersChatRoom = new UserChatRoomController();
-        $this->message = new MessageController();
+        $this->usersChatRoom = app(UserChatRoomController::class);
+        $this->message = app(MessageController::class);
+        $this->chatRoomQueries = app(ChatRoomQueries::class);
     }
 
     /*
      * Get ChatRoom list by userId
      */
-    public function chatRoomsByUser(int $id)
+    public function chatRoomsByUser(int $id): JsonResponse
     {
-        $chatRooms = DB::table('users_chat_rooms')
-                        ->join('chat_rooms', 'users_chat_rooms.chat_room_id', 'chat_rooms.id')
-                        ->join('users', 'users_chat_rooms.user_id', 'users.id')
-                        ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-                        ->select('chat_rooms.id', 'chat_rooms.title','messages.message AS last_message','messages.updated_at')
-                        ->whereNotIn('users.username',[1,3])
-                        ->where('users.id', $id)
-                        ->whereIn('messages.id', function ($query) {
-                            $query->select(DB::raw('MAX(messages.id)'))->from('messages')->groupBy('messages.chat_room_id');
-                        })
-                        ->orderBy('messages.created_at', 'desc')
-                        ->get();
+        $chatRooms = $this->chatRoomQueries->getListByUserId($id);
 
-        $chatRooms->each(function ($value) use ($id){
-            $value->title = Db::table('users')
-                                ->join('users_chat_rooms','users.id','users_chat_rooms.user_id')
-                                ->select('users.username')
-                                ->where('users_chat_rooms.chat_room_id', $value->id)
-                                ->where('users_chat_rooms.user_id','<>', $id)->value('username');
+        $chatRooms->each(function ($value) use ($id) {
+            $value->title = $this->chatRoomQueries->getTitleByUserId($id, $value->id);
         });
 
-        $chatRooms->last(function ($value) {
-            if (is_null($value->last_message)) {
-                return $value->last_message = 'Голосовое сообщение';
-            }
-        });
 
         return response()->json([
             "status" => true,

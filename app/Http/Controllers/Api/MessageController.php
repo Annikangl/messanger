@@ -2,36 +2,40 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\MessageNotificationEvent;
 use App\Exceptions\MessageException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreMessageRequest;
 use App\Models\Message;
+use App\Repositories\Interfaces\ChatRoomQueries;
+use App\Repositories\Interfaces\MessageQueries;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 
-
 class MessageController extends Controller
 {
+    private MessageQueries $messageQueries;
+    private ChatRoomQueries $chatRoomQueries;
+
+    public function __construct()
+    {
+        $this->messageQueries = app(MessageQueries::class);
+        $this->chatRoomQueries = app(ChatRoomQueries::class);
+    }
+
     /*
      * Get dialog by chat_room
      * $dialog - collect of messages by ChatRoomId
      * receiver_id -  receiver ID in chat room
      */
     /**
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     * @throws FileNotFoundException
      */
-    public function index(int $chatRoomId, int $userId)
+    public function index(int $chatRoomId, int $userId, $all = null): \Illuminate\Http\JsonResponse
     {
-        $dialog = DB::table('messages')
-            ->join('chat_rooms','messages.chat_room_id','chat_rooms.id')
-            ->select('messages.sender_id as sender_id', 'messages.message','messages.audio',
-                    DB::raw("DATE_FORMAT(messages.created_at, '%h:%i') as created_at"))
-            ->where('messages.chat_room_id', [$chatRoomId])
-            ->orderBy('messages.created_at', 'DESC')
-            ->simplePaginate(15);
+        $all ? $dialog = $this->messageQueries->getWithoutPaginate($chatRoomId)
+            : $dialog = $this->messageQueries->getWithPaginate($chatRoomId, 15);
 
         foreach ($dialog as $key => $conversation) {
             if (!is_null($conversation->audio)) {
@@ -39,18 +43,13 @@ class MessageController extends Controller
             }
         }
 
-        $receiver_id = DB::table('users_chat_rooms')
-            ->select('user_id as receiver_id')
-            ->where('users_chat_rooms.chat_room_id',[$chatRoomId])
-            ->where('users_chat_rooms.user_id', '<>',[$userId])
-            ->value('receiver_id');
-
+        $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
 
         return response()->json([
             "status" => true,
             "receiver_id" => $receiver_id,
-            "dialog" => array_reverse($dialog->toArray()['data']),
-            "pagination" => [
+            "dialog" => $all ? array_reverse($dialog->toArray()) : array_reverse($dialog->toArray()['data']),
+            "pagination" => $all ? [] : [
                 'currentPage' => $dialog->currentPage(),
                 'next_page_url' => $dialog->nextPageUrl(),
                 'last_page_url' => $dialog->previousPageUrl()
@@ -62,10 +61,10 @@ class MessageController extends Controller
       * Create new message in chatRoom
      */
     /**
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     * @throws FileNotFoundException
      * @throws MessageException
      */
-    public function store($data): Message
+    public function store($data)
     {
         return $data['audio'] ? $this->storeAudioMessage($data) : $this->storeTextMessage($data);
     }
@@ -77,7 +76,7 @@ class MessageController extends Controller
     {
         $validator = Validator::make($message, [
             'sender_id' => 'required|integer',
-            'message' => 'required|string',
+
             'chat_room_id' => 'required|integer'
         ]);
 
@@ -92,24 +91,21 @@ class MessageController extends Controller
 
         try {
             Db::transaction(function () use ($message, &$newMessage) {
-                $newMessage = Message::create([
-                    'sender_id' => $message['sender_id'],
-                    'message' => $message['message'],
-                    'chat_room_id' => $message['chat_room_id']
-                ]);
+                $newMessage = Message::create($message);
 
-                $senderName = DB::table('users')->select('username')->where('id',[$newMessage->sender_id])->first();
+                $senderName = DB::table('users')->select('username')->where('id', [$newMessage->sender_id])->first();
                 $newMessage->username = $senderName->username;
             });
         } catch (MessageException $exception) {
             throw new MessageException('Message not created');
         }
 
+
         return $newMessage;
     }
 
     /**
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     * @throws FileNotFoundException
      * @throws MessageException
      */
     public function storeAudioMessage($message)
@@ -128,8 +124,8 @@ class MessageController extends Controller
         }
 
         $audioMessage = base64_decode($message['audio']);
-        $path = 'user-'. $message['sender_id'];
-        $audioMessagePath =  'user-'. $message['sender_id'] . '/voicemessages/voice_' . date('d:m:Y H:i:s') . '.arm';
+        $path = 'user-' . $message['sender_id'];
+        $audioMessagePath = 'user-' . $message['sender_id'] . '/voicemessages/voice_' . date('d:m:Y H:i:s') . '.arm';
 
         if (!Storage::disk('local')->exists($path)) {
             (new AuthController())->makeUserFolder($path);
@@ -148,7 +144,7 @@ class MessageController extends Controller
                     'chat_room_id' => $message['chat_room_id']
                 ]);
 
-                $senderName = DB::table('users')->select('username')->where('id',[$newMessage->sender_id])->first();
+                $senderName = DB::table('users')->select('username')->where('id', [$newMessage->sender_id])->first();
                 $newMessage->username = $senderName->username;
             });
         } catch (MessageException $exception) {

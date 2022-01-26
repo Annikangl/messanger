@@ -8,12 +8,14 @@ use Carbon\Carbon;
 
 class Message extends Model
 {
-    /**
-     * @mixin Builder
-     */
     use HasFactory;
 
-    protected $fillable = ['sender_id', 'message','audio','chat_room_id'];
+    protected $fillable = ['sender_id', 'message', 'audio', 'chat_room_id'];
+
+    public function chatRoom()
+    {
+        return $this->belongsTo(ChatRoom::class);
+    }
 
     /*
      * Convert created_at to hours:minutes format
@@ -22,4 +24,15 @@ class Message extends Model
     {
         return Carbon::parse($value)->format('H:i');
     }
+
+
+    public function setMessageAttribute($value): void
+    {
+        if (is_null($value)) {
+            $this->attributes['message'] = 'Голосовое сообщение';
+        } else {
+            $this->attributes['message'] = $value;
+        }
+    }
+
 }

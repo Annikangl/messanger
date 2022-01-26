@@ -26,6 +26,7 @@ class  User extends Authenticatable
         'active'
     ];
 
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -45,8 +46,12 @@ class  User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function friends()
+    /**
+     * Комнаты, принадлежащие пользователю
+     */
+    public function chatRooms()
     {
-        return $this->hasMany(Friends::class);
+        return $this->belongsToMany(ChatRoom::class,'users_chat_rooms')
+            ->withTimestamps();
     }
 }

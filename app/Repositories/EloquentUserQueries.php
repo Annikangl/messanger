@@ -26,7 +26,7 @@ final class EloquentUserQueries implements UserQueries
             ->get();
     }
 
-    public function getUserFriends($userId): \Illuminate\Support\Collection
+    public function getUserFriends($userId)
     {
         return DB::table('users_friends')
                         ->join('users', 'users_friends.friend_id', 'users.id')

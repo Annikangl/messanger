@@ -32,11 +32,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user/{id}/chatroom', [ChatRoomController::class, 'chatRoomsByUser'])->name('chatRoomList');
     Route::post('/chatroom', [ChatRoomController::class, 'store'])->name('createChatRoom');
 
-    Route::get('/user/{id}', [UserController::class, 'show'])->name('getUserById');
-    Route::get('/user/{id}/friends', [UserController::class, 'friends'])->name('getUserFriends');
-    Route::get('/user/{userId}/search/{username}', [UserController::class, 'searchUser'])->where('search','.*');
+    Route::get('/user/{id}', [UserController::class, 'show'])
+        ->name('getUserById');
+    Route::get('/user/{id}/friends', [UserController::class, 'friends'])
+        ->name('getUserFriends');
+    Route::get('/user/{userId}/search/{username}', [UserController::class, 'searchUser'])
+        ->where('search','.*');
 
-    Route::get('/chat/{chatRoomId}/{userId}/dialog', [MessageController::class, 'index'])->name('getDialog');
+    Route::get('/chat/{chatRoomId}/{userId}/dialog/{all?}', [MessageController::class, 'index'])
+        ->name('dialogWithPaginate');
+
     Route::post('/chat/{id}', [MessageController::class, 'store'])->middleware(['cors']);
 });
 

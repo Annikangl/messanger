@@ -119,7 +119,6 @@ class ChatSocket extends BaseSocket
         foreach ($this->clients as $client) {
             foreach ($receiverIds as $receiver) {
                 if ($client->resourceId === $receiver->socket_id) {
-                    dump($client->resourceId, $receiver->socket_id);
                     $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
                 }
             }

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
-    private $userQueries;
+    private UserQueries $userQueries;
 
     public function __construct(UserQueries $userQueries)
     {
@@ -41,14 +41,7 @@ class UserController extends Controller
      */
     public function friends(int $id): \Illuminate\Http\JsonResponse
     {
-
         $friends = $this->userQueries->getUserFriends($id);
-
-//        $friends = DB::table('users_friends')
-//                        ->join('users', 'users_friends.friend_id', 'users.id')
-//                        ->select('users_friends.friend_id as id','users.username', 'users.email', 'users.avatar', 'users.last_login')
-//                        ->where('users_friends.user_id', $id)
-//                        ->get();
 
         if ($friends->isEmpty()) {
             throw new UserNotFoundExceprion('Friends not found');
