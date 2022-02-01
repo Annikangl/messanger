@@ -6,50 +6,59 @@ namespace App\Repositories;
 
 use App\Models\ChatRoom;
 use App\Repositories\Interfaces\MessageQueries;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\Paginator;
 
 class EloquentMessageQueries implements MessageQueries
 {
 
-    public function getWithPaginate(int $chatRoomId, $perPage)
+    public function getWithPaginate(int $chatRoomId, $perPage): Paginator
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
-            ->select('messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
+            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
             ->latest('messages.created_at')
             ->simplePaginate($perPage);
-
-//        $result = DB::table('messages')
-//            ->join('chat_rooms','messages.chat_room_id','chat_rooms.id')
-//            ->select('messages.sender_id as sender_id', 'messages.message','messages.audio',
-//                DB::raw("DATE_FORMAT(messages.created_at, '%h:%i') as created_at"))
-//            ->where('messages.chat_room_id', [$chatRoomId])
-//            ->latest('messages.created_at')
-//            ->simplePaginate($perPage);
 
         return $result;
     }
 
-    public function getWithoutPaginate(int $chatRoomId)
+    public function getWithoutPaginate(int $chatRoomId): Collection
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
             ->select('messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
             ->latest('messages.created_at')
             ->get();
-//        $result = DB::table('messages')
-//            ->join('chat_rooms','messages.chat_room_id','chat_rooms.id')
-//            ->select('messages.sender_id as sender_id', 'messages.message','messages.audio',
-//                DB::raw("DATE_FORMAT(messages.created_at, '%h:%i') as created_at"))
-//            ->where('messages.chat_room_id', [$chatRoomId])
-//            ->latest('messages.created_at')
-//            ->get();
 
         return $result;
     }
 
-    public function getUsernameById(int $userId)
+    public function getNewMessage(int $chatRoomId, int $messageId)
     {
-        // TODO
+        $result = ChatRoom::find($chatRoomId)
+            ->messages()
+            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
+            ->where('messages.id', '>', [$messageId])
+            ->latest('messages.created_at')
+            ->get();
+
+        return $result;
     }
+
+    public function getOldMessage(int $chatRoomId, int $messageId)
+    {
+        $result = ChatRoom::find($chatRoomId)
+            ->messages()
+            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
+            ->where('messages.id', '<', [$messageId])
+            ->latest('messages.created_at')
+            ->limit(15)
+            ->get();
+
+        return $result;
+    }
+
+
 
 }

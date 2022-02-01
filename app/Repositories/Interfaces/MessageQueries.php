@@ -4,9 +4,11 @@
 namespace App\Repositories\Interfaces;
 
 
+
 interface MessageQueries
 {
-    public function getWithPaginate(int $chatRoomId,$perPage);
+    public function getWithPaginate(int $chatRoomId,int $perPage);
     public function getWithoutPaginate(int $chatRoomId);
-    public function getUsernameById(int $userId);
+    public function getNewMessage(int $chatRoomId, int $messageId);
+    public function getOldMessage(int $chatRoomId, int $messageId);
 }

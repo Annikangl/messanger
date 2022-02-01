@@ -109,6 +109,7 @@ class ChatSocket extends BaseSocket
         $responseData = [
             "type" => $data['type'],
             "sender_id" => $message->sender_id,
+            "message_id" => $message->id,
             "message" => $message->message,
             "username" => $message->username,
             "audio" => $message->audio,

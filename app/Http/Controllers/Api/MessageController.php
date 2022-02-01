@@ -7,7 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use App\Repositories\Interfaces\MessageQueries;
+use App\Repositories\Interfaces\UserQueries;
+use http\Client\Request;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -32,10 +35,9 @@ class MessageController extends Controller
     /**
      * @throws FileNotFoundException
      */
-    public function index(int $chatRoomId, int $userId, $all = null): \Illuminate\Http\JsonResponse
+    public function index(int $chatRoomId, int $userId): JsonResponse
     {
-        $all ? $dialog = $this->messageQueries->getWithoutPaginate($chatRoomId)
-            : $dialog = $this->messageQueries->getWithPaginate($chatRoomId, 15);
+        $dialog = $this->messageQueries->getWithPaginate($chatRoomId, 15);
 
         foreach ($dialog as $key => $conversation) {
             if (!is_null($conversation->audio)) {
@@ -48,12 +50,32 @@ class MessageController extends Controller
         return response()->json([
             "status" => true,
             "receiver_id" => $receiver_id,
-            "dialog" => $all ? array_reverse($dialog->toArray()) : array_reverse($dialog->toArray()['data']),
-            "pagination" => $all ? [] : [
+            "dialog" => array_reverse($dialog->toArray()['data']),
+            "pagination" =>  [
                 'currentPage' => $dialog->currentPage(),
                 'next_page_url' => $dialog->nextPageUrl(),
                 'last_page_url' => $dialog->previousPageUrl()
             ]
+        ])->setStatusCode(200);
+    }
+
+    public function newOrAllMessages(int $chatRoomId, int $userId,int $messageId, $old = null): JsonResponse
+    {
+        $old ? $dialog = $this->messageQueries->getOldMessage($chatRoomId, $messageId)
+            : $dialog = $this->messageQueries->getNewMessage($chatRoomId, $messageId);
+
+        foreach ($dialog as $key => $conversation) {
+            if (!is_null($conversation->audio)) {
+                $conversation->audio = base64_encode(Storage::disk('local')->get($conversation->audio));
+            }
+        }
+
+        $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
+
+        return response()->json([
+            "status" => true,
+            "receiver_id" => $receiver_id,
+            "dialog" => array_reverse($dialog->toArray()),
         ])->setStatusCode(200);
     }
 
@@ -87,14 +109,15 @@ class MessageController extends Controller
             ]);
         }
 
+        $userQueries = app(UserQueries::class);
         $newMessage = null;
 
         try {
-            Db::transaction(function () use ($message, &$newMessage) {
+            Db::transaction(function () use ($message, &$newMessage, $userQueries) {
                 $newMessage = Message::create($message);
 
-                $senderName = DB::table('users')->select('username')->where('id', [$newMessage->sender_id])->first();
-                $newMessage->username = $senderName->username;
+                $senderName = $userQueries->getUsernameById($newMessage->sender_id);
+                $newMessage->username = $senderName;
             });
         } catch (MessageException $exception) {
             throw new MessageException('Message not created');
@@ -133,10 +156,11 @@ class MessageController extends Controller
 
         Storage::disk('local')->put($audioMessagePath, $audioMessage);
 
+        $userQueries = app(UserQueries::class);
         $newMessage = null;
 
         try {
-            Db::transaction(function () use ($message, &$newMessage, $audioMessagePath) {
+            Db::transaction(function () use ($message, $userQueries, &$newMessage, $audioMessagePath) {
                 $newMessage = Message::create([
                     'sender_id' => $message['sender_id'],
                     'message' => null,
@@ -144,8 +168,8 @@ class MessageController extends Controller
                     'chat_room_id' => $message['chat_room_id']
                 ]);
 
-                $senderName = DB::table('users')->select('username')->where('id', [$newMessage->sender_id])->first();
-                $newMessage->username = $senderName->username;
+                $senderName = $userQueries->getUsernameById($newMessage->sender_id);
+                $newMessage->username = $senderName;
             });
         } catch (MessageException $exception) {
             throw new MessageException('Message not created');

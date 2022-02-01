@@ -39,8 +39,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user/{userId}/search/{username}', [UserController::class, 'searchUser'])
         ->where('search','.*');
 
-    Route::get('/chat/{chatRoomId}/{userId}/dialog/{all?}', [MessageController::class, 'index'])
+    Route::get('/chat/{chatRoomId}/{userId}/dialog', [MessageController::class, 'index'])
         ->name('dialogWithPaginate');
+    Route::get('/chat/{chatRoomId}/{userId}/{messageId}/{old?}', [MessageController::class, 'newOrAllMessages'])
+        ->name('new-or-all-messages');
 
     Route::post('/chat/{id}', [MessageController::class, 'store'])->middleware(['cors']);
 });

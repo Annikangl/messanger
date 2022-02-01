@@ -60,7 +60,7 @@ class ChatRoomController extends Controller
                         ['title' => $request_data['title']]
                     );
 
-                    // create record into users_chat_rooms table
+                    // create record into chatroom_user table
                     $this->usersChatRoom->store([
                         'sender_id' => $request_data['sender_id'],
                         'receiver_id' => $request_data['receiver_id'],
@@ -91,12 +91,12 @@ class ChatRoomController extends Controller
 
     public function existChatRoomId($data)
     {
-        $senderChatRooms = DB::table('users_chat_rooms')
+        $senderChatRooms = DB::table('chatroom_user')
                             ->select('chat_room_id AS chat_room')
                             ->where('user_id', [$data['sender_id']])
                             ->get();
 
-        $receiverChatRoms = DB::table('users_chat_rooms')
+        $receiverChatRoms = DB::table('chatroom_user')
             ->select('chat_room_id AS chat_room')
             ->where('user_id', [$data['receiver_id']])
             ->get();

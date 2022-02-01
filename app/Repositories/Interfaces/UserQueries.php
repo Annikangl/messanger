@@ -10,5 +10,6 @@ use Illuminate\Database\Eloquent\Collection;
 interface UserQueries
 {
     public function getById(int $id): User;
-    public function getByUsername(string $username, int $userId): Collection;
+    public function getByUsername(string $username, int $userId);
+    public function getUsernameById(int $id);
 }
