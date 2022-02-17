@@ -7,7 +7,11 @@ use App\Classes\Socket\Base\BaseSocket;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\MessageController;
 use App\Models\Call;
+use App\Models\User;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use JsonException;
 use Ratchet\ConnectionInterface;
 
 class ChatSocket extends BaseSocket
@@ -17,12 +21,13 @@ class ChatSocket extends BaseSocket
     protected array $audioClients;
     public CallController $call;
 
-    protected $caller = null;
-    protected $receiver = null;
+    private array $errorStatuses = [
+        400,
+        401,
+        402,
+        403
+    ];
 
-    public $callerId = null;
-    public $receiverSocketId = null;
-    public $senderSocketId = null;
 
     public function __construct()
     {
@@ -53,11 +58,8 @@ class ChatSocket extends BaseSocket
             case "message":
                 $this->sendMessage($data);
                 break;
-//            case "call":
-//                $this->sendVoiceCall($data);
-//                break;
             case "init_call":
-                $data['status'] = (int) $data['status'];
+                $data['status'] = (int)$data['status'];
                 $this->initialCall($data);
                 break;
             default:
@@ -72,13 +74,13 @@ class ChatSocket extends BaseSocket
         echo "Connection {$conn->resourceId} has disconnected\n";
     }
 
-    public function onError(ConnectionInterface $conn, \Exception $e)
+    public function onError(ConnectionInterface $conn, Exception $e)
     {
         echo "An error has occurred: {$e->getMessage()}\n";
         $conn->close();
     }
 
-    public function updateSocketId($userId,$socketId): int
+    public function updateSocketId($userId, $socketId): int
     {
         return DB::table('users')
             ->where('id', $userId)
@@ -128,21 +130,25 @@ class ChatSocket extends BaseSocket
     }
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function initialCall($data)
     {
-
         // Send call notification to receiver user
         if ($data['status'] === 100) {
             $call = $this->makeOutboundCall($data);
+            $user = User::find($data['sender_id'])->select('username')
+                ->first();
 
             $responseData = [
                 "type" => $data['type'],
                 "status" => $call->status,
                 "call_id" => $call->id,
                 "sender_id" => $data['sender_id'],
+                "username" => $user->username
             ];
+
+            dump('Response data', $responseData);
 
             $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
                 return $socketId !== $data['sender_id'];
@@ -190,7 +196,6 @@ class ChatSocket extends BaseSocket
 
 //        Receiver user accepted the call
         if ($data['status'] === 200) {
-            dump('status ' . $data['status']);
             $this->acceptCall($data);
 //            $receiverId = $this->getSocketIdByUser($this->callerId);
 //            $responseData = [
@@ -205,60 +210,58 @@ class ChatSocket extends BaseSocket
 //            }
         }
 
-        if ($data['status'] === 201) {
-//            $receiver = array_filter($this->audioClients, function ($id) use ($data) {
-//                return $id !== $data['sender_id'];
-//            }, ARRAY_FILTER_USE_KEY);
-//
-//            $receiver = reset($receiver);
+        if (in_array($data['status'], $this->errorStatuses, true)) {
+            $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
+                return $socketId !== $data['sender_id'];
+            }, ARRAY_FILTER_USE_KEY);
 
-            $this->sendVoiceInCall($data);
-
-//            $responseData = [
-//                "type" => 'call',
-//                "sender_id" =>  $this->getSocketIdByUser($data['sender_id']),
-//                "receiver_id" => $receiver,
-//                "voice_audio" => $data['voice_audio']
-//            ];
-
-//            $this->sendVoiceCall($responseData);
-        }
-
-        if ($data['status'] === 400 || $data['status'] === 450) {
-            dump($data);
-            $responseData = [
-                "status" => $data['status']
-            ];
-
-            dump('Status ' . $data['status']);
+            $receiver = reset($receiver);
 
             foreach ($this->clients as $client) {
-                foreach ($this->audioClients as $receiver) {
-                    if ($client->resourceId === $receiver) {
-                        dump('Close call ' . $receiver . ' status ' . $responseData['status']);
-                        $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
-                    }
+                if ($client->resourceId === $receiver) {
+                    $client->send(json_encode($data, JSON_THROW_ON_ERROR));
                 }
             }
         }
+
     }
 
-    public function makeOutboundCall(array $data): Call|\Illuminate\Http\JsonResponse
+    /**
+     * @throws Exception
+     */
+    public function makeOutboundCall(array $data): Call|JsonResponse
     {
         $this->audioClients = [
             $data['sender_id'] => $this->getSocketIdByUser($data['sender_id']),
             $data['receiver_id'] => $this->getSocketIdByUser($data['receiver_id'])
         ];
 
+        $user = User::find($data['sender_id']);
+        $user->call_address = $data['call_address'];
+        if (!$user->save()) {
+            throw new Exception('User not update IP');
+        }
+
         return $this->call->store($data);
     }
 
+    /**
+     * @throws JsonException
+     * @throws Exception
+     */
     public function acceptCall(array $data): void
     {
         $call = $this->call->update($data);
 
-        dump($call->status);
+        $user = User::find($data['sender_id']);
+        $user->call_address = $data['call_address'];
+
+        if (!$user->save()) {
+            throw new Exception('User not update IP');
+        }
+
         if ($call) {
+
             $responseData = [
                 "status" => $call->status
             ];
@@ -269,62 +272,13 @@ class ChatSocket extends BaseSocket
 
             $receiver = reset($receiver);
 
-            dump('Receiver with 200 ' . $receiver);
-
             foreach ($this->clients as $client) {
                 if ($client->resourceId === $receiver) {
-                    dump('Send status ' . $responseData['status'] . ' to socket ' . $receiver);
+//                    dump('Send status ' . $responseData['status'] . ' to socket ' . $receiver);
                     $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
                 }
             }
         }
-    }
-
-    /**
-     * @throws \JsonException
-     */
-    public function sendVoiceInCall(array $data): void
-    {
-        $receiver = array_filter($this->audioClients, function ($userId) use ($data) {
-            return $userId !== $data['sender_id'];
-        }, ARRAY_FILTER_USE_KEY);
-
-        $receiver = reset($receiver);
-
-        $responseData = [
-            "type" => 'call',
-            "sender_id" =>  $data['sender_id'],
-            "receiver_id" => $receiver,
-            "voice_audio" => $data['voice_audio']
-        ];
-
-        $this->sendVoiceCall($responseData);
-    }
-
-    /**
-     * @throws \JsonException
-     */
-    public function sendVoiceCall($data): void
-    {
-        $receiverId ??= $data['receiver_id'];
-
-        $responseData = [
-            'type' => $data['type'],
-            'sender_id' => $data['sender_id'],
-            'receiver_id' => $data['receiver_id'],
-            'voice_audio' => $data['voice_audio']
-        ];
-
-        if ($receiverId) {
-            foreach ($this->clients as $client) {
-                if ($client->resourceId === $receiverId) {
-                    dump('Sending voice from ' . $responseData['receiver_id'] . ' to ' . $responseData['sender_id']);
-                    $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
-                }
-            }
-        }
-
-
     }
 }
 

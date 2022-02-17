@@ -50,7 +50,5 @@ class AudioServer extends Command
         $loop = Loop::get();
         (new UDPSocket($address, $loop))->run();
 
-
-
     }
 }

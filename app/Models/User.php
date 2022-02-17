@@ -59,7 +59,7 @@ class  User extends Authenticatable
      */
     public function chatRooms(): BelongsToMany
     {
-        return $this->belongsToMany(ChatRoom::class,'chatroom_user','user_id')
+        return $this->belongsToMany(ChatRoom::class)
             ->withTimestamps();
     }
 

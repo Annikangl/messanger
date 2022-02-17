@@ -15,9 +15,9 @@ class EloquentChatRoomQueries implements ChatRoomQueries
 
     public function getListByUserId($id): Collection
     {
-        $result = DB::table('chatroom_user')
-            ->join('chat_rooms', 'chatroom_user.chatroom_id', 'chat_rooms.id')
-            ->join('users', 'chatroom_user.user_id', 'users.id')
+        $result = DB::table('chat_room_user')
+            ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
+            ->join('users', 'chat_room_user.user_id', 'users.id')
             ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
             ->select('chat_rooms.id', 'chat_rooms.title','messages.message AS last_message','messages.updated_at')
             ->where('users.id', $id)

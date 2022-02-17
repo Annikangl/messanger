@@ -5,11 +5,10 @@ namespace App\Providers;
 use App\Repositories\EloquentChatRoomQueries;
 use App\Repositories\EloquentMessageQueries;
 use App\Repositories\EloquentUserQueries;
-use App\Repositories\EloquentUsersChatRoomQueries;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use App\Repositories\Interfaces\MessageQueries;
 use App\Repositories\Interfaces\UserQueries;
-use App\Repositories\Interfaces\UsersChatRoomQueries;
+
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -36,10 +35,6 @@ class RepositoryServiceProvider extends ServiceProvider
             EloquentMessageQueries::class
         );
 
-        $this->app->bind(
-            UsersChatRoomQueries::class,
-            EloquentUsersChatRoomQueries::class
-        );
     }
 
     /**

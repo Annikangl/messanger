@@ -4,7 +4,8 @@
 namespace App\Classes\Socket;
 
 
-use Illuminate\Support\Env;
+use Exception;
+use JsonException;
 use React\Datagram\Factory;
 use React\Datagram\Socket;
 use React\EventLoop\LoopInterface;
@@ -15,22 +16,24 @@ class UDPSocket
     /**
      * @var string
      */
-    protected $address;
+    protected string $address;
 
     /**
      * @var LoopInterface
      */
-    protected $loop;
+    protected LoopInterface $loop;
 
     /**
      * @var array
      */
-    protected $clients = [];
+    protected array $clients = [];
 
     /**
      * @var Socket
      */
-    protected $socket;
+    protected Socket $socket;
+
+    public static array $members = [];
 
     /**
      * @param string $address
@@ -43,44 +46,43 @@ class UDPSocket
     }
 
     /**
-     * @throws \JsonException
+     * @throws Exception
      */
-    public function event($data, $address)
+    public function event($data, $address): void
     {
-       if (str_contains($data, 'type')) {
-           // TODO convert to associative array
-           $data = json_decode($data, true);
-           dump('Array ' , $data);
-       } else {
-           dump('Bytes ', $data);
-       }
+        $receiveAddress = null;
 
-        $this->addClient('test',$address);
-        $this->sendMessage($data, $address);
-//        $data = json_decode($data, true);
-//
-//        if ($data['type'] == 'enter') {
-//            $this->addClient($data['name'], $address);
-//            return;
-//        }
-//
-//        if ($data['type'] == 'leave') {
-//            $this->removeClient($address);
-//            return;
-//        }
-//
-//        $this->sendMessage($data['message'], $address);
+        if (str_contains($data, 'sender_id')){
+            $ids = (int)preg_replace('/\D/', '', $data);
+            $voicesId = substr($ids,0,1);
+            $callId = substr($ids,1);
+
+            dump($data);
+
+            $user = \DB::table('users')
+                ->select('username','call_address')
+                ->where('id', [$voicesId])
+                ->first();
+
+//            dump('Call_adress '. $user->call_address);
+
+            $this->addClient($user->username, $user->call_address);
+        } else {
+//            dump('Adress' . $address);
+            $this->sendMessage($data, $address);
+        }
+
     }
 
-    protected function addClient($name, $address)
+    protected function addClient($userId, $address)
     {
         if (array_key_exists($address, $this->clients)) {
             return;
         }
 
-        $this->clients[$address] = $name;
+        $this->clients[$address] = $userId;
 
-        $this->broadcast("$name enters chat", $address);
+//        $this->broadcast("$name enters chat", $address);
     }
 
     protected function removeClient($address)
@@ -92,20 +94,24 @@ class UDPSocket
         $this->broadcast("$name leaves chat");
     }
 
-    protected function broadcast($message, $except = null)
+    protected function broadcast($data, $except = null)
     {
-        foreach ($this->clients as $address => $name) {
-            if ($address == $except) continue;
+        dump($data);
 
-            $this->socket->send($message,  $address);
+        foreach ($this->clients as $address => $userId) {
+            if ($address === $except) {
+                continue;
+            }
+
+            $this->socket->send($data, $address);
         }
     }
 
-    protected function sendMessage($message, $address)
+    protected function sendMessage($data, $address)
     {
         $name = $this->clients[$address] ?? '';
 
-        $this->broadcast($message, $address);
+        $this->broadcast($data, $address);
     }
 
     public function run(): void
@@ -117,7 +123,7 @@ class UDPSocket
                     $this->socket = $server;
                     $server->on('message', [$this, 'event']);
                 },
-                function (\Exception $error) {
+                function (Exception $error) {
                     echo "ERROR: {$error->getMessage()}\n";
                 }
             );

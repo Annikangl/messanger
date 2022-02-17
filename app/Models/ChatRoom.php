@@ -19,7 +19,7 @@ class ChatRoom extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'chatroom_user','chatroom_id');
+        return $this->belongsToMany(User::class);
     }
 
 }

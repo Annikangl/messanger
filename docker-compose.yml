@@ -16,7 +16,7 @@ services:
         build:
             context: .
             dockerfile: docker/Fpm.Dockerfile
-        container_name: php7
+        container_name: php8
         volumes:
         -   ./:/var/www/messanger
         links:

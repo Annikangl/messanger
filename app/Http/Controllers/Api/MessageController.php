@@ -98,7 +98,6 @@ class MessageController extends Controller
     {
         $validator = Validator::make($message, [
             'sender_id' => 'required|integer',
-
             'chat_room_id' => 'required|integer'
         ]);
 

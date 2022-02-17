@@ -3,10 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreCallRequest;
-use App\Http\Requests\UpdateCallRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Models\Call;
 use Illuminate\Support\Facades\Validator;
 

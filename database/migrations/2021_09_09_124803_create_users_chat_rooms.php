@@ -13,12 +13,12 @@ class CreateUsersChatRooms extends Migration
      */
     public function up()
     {
-        Schema::create('chatroom_user', function (Blueprint $table) {
+        Schema::create('chat_room_user', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('user_id')->unsigned();
             $table->integer('chatroom_id')->unsigned();
             $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('chatroom_id')->references('id')->on('chat_rooms');
+            $table->foreign('chat_room_id')->references('id')->on('chat_rooms');
             $table->timestamps();
         });
     }
@@ -30,6 +30,6 @@ class CreateUsersChatRooms extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users_chat_rooms');
+        Schema::dropIfExists('chat_room_user');
     }
 }
