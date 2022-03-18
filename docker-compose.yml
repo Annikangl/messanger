@@ -8,31 +8,50 @@ services:
         ports:
         -   8098:80
         links:
-            -   fpm
+            -   php-fpm
         volumes:
         -   ./:/var/www/messanger
 
-    fpm:
+
+    php-fpm:
         build:
             context: .
             dockerfile: docker/Fpm.Dockerfile
-        container_name: php8
         volumes:
         -   ./:/var/www/messanger
-        links:
-            -   mysql
+        depends_on:
+            - mysql
+            - mysql-test
+        environment:
+            - DB_PORT=3306
+            - DB_HOST=mysql
+
 
     mysql:
         image: mysql:5.7
         ports:
         -   33061:3306
         volumes:
-        -   ./dump:/var/lib/mysql
+        -   ./storage/docker/mysql:/var/lib/mysql
         environment:
             - MYSQL_ROOT_PASSWORD=root
             - MYSQL_DATABASE=messanger_db
             - TZ=Europe/Moscow
         command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
+
+
+    mysql-test:
+        image: mysql:5.7
+        ports:
+            -   33062:3306
+        volumes:
+            -   ./storage/docker/mysql-test:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=messanger_db
+            - TZ=Europe/Moscow
+        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
+
 
     phpmyadmin:
         image: phpmyadmin/phpmyadmin

@@ -4,6 +4,8 @@
 namespace App\Classes\Socket;
 
 
+use App\Models\Call;
+use App\Models\User;
 use Exception;
 use JsonException;
 use React\Datagram\Factory;
@@ -33,8 +35,6 @@ class UDPSocket
      */
     protected Socket $socket;
 
-    public static array $members = [];
-
     /**
      * @param string $address
      * @param LoopInterface $loop
@@ -50,37 +50,39 @@ class UDPSocket
      */
     public function event($data, $address): void
     {
-        $receiveAddress = null;
 
         if (str_contains($data, 'sender_id')){
             $ids = (int)preg_replace('/\D/', '', $data);
             $voicesId = substr($ids,0,1);
             $callId = substr($ids,1);
 
-            dump($data);
+            $callRoom = Call::where('id',[$callId])->first();
 
-            $user = \DB::table('users')
-                ->select('username','call_address')
-                ->where('id', [$voicesId])
-                ->first();
+            $callAdresses = User::whereIn('call_address',[$callRoom->sender_id,$callRoom->receiver_id])->get();
+
+            dump($callAdresses);
+
+//            $user = \DB::table('users')
+//                ->select('username','call_address')
+//                ->where('id', [$voicesId])
+//                ->first();
 
 //            dump('Call_adress '. $user->call_address);
 
-            $this->addClient($user->username, $user->call_address);
+            $this->addClient($callRoom->id, $callRoom);
         } else {
-//            dump('Adress' . $address);
             $this->sendMessage($data, $address);
         }
 
     }
 
-    protected function addClient($userId, $address)
+    protected function addClient(int $callId, array $addresses)
     {
-        if (array_key_exists($address, $this->clients)) {
+        if (array_key_exists($callId, $this->clients)) {
             return;
         }
 
-        $this->clients[$address] = $userId;
+        $this->clients[$callId] = $addresses;
 
 //        $this->broadcast("$name enters chat", $address);
     }
@@ -96,7 +98,7 @@ class UDPSocket
 
     protected function broadcast($data, $except = null)
     {
-        dump($data);
+        dump('address', $except);
 
         foreach ($this->clients as $address => $userId) {
             if ($address === $except) {

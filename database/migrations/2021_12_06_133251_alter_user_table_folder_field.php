@@ -14,7 +14,7 @@ class AlterUserTableFolderField extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('folder',50)->after('avatar');
+            $table->string('folder',50)->nullable()->after('avatar');
         });
     }
 
