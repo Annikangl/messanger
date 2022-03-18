@@ -21,7 +21,7 @@ class ChatSocket extends BaseSocket
     protected array $audioClients;
     public CallController $call;
 
-    private array $errorStatuses = [
+    private array $errorCallStatuses = [
         400,
         401,
         402,
@@ -131,6 +131,7 @@ class ChatSocket extends BaseSocket
 
     /**
      * @throws JsonException
+     * @throws Exception
      */
     public function initialCall($data)
     {
@@ -162,55 +163,14 @@ class ChatSocket extends BaseSocket
                     $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
                 }
             }
-
-
-//            $this->audioClients = [
-//                $data['sender_id'] => $this->getSocketIdByUser($data['sender_id']),
-//                $data['receiver_id'] => $this->getSocketIdByUser($data['receiver_id'])
-//            ];
-
-//            $this->receiverSocketId = $this->getSocketIdByUser($data['receiver_id']);
-//            $this->callerId = $data['sender_id'];
-//            $this->senderSocketId = $this->getSocketIdByUser($data['sender_id']);
-
-//            $this->call = Call::create([
-//                "sender_id" => $data['sender_id'],
-//                "receiver_id" => $data['receiver_id'],
-//                "status" => $data['status'],
-//            ]);
-
-//            if ($this->call) {
-//                $responseData = [
-//                    "type" => $data['type'],
-//                    "sender_id" => $data['sender_id'],
-//                ];
-//
-//                foreach ($this->clients as $client) {
-//                    if ($client->resourceId === $this->receiverSocketId) {
-//                        dump('Initialed call');
-//                        $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
-//                    }
-//                }
-//            }
         }
 
 //        Receiver user accepted the call
         if ($data['status'] === 200) {
             $this->acceptCall($data);
-//            $receiverId = $this->getSocketIdByUser($this->callerId);
-//            $responseData = [
-//                "status" => $data['status']
-//            ];
-//
-//            foreach ($this->clients as $client) {
-//                if ($client->resourceId === $receiverId) {
-//                    dump('Send status ' . $responseData['status'] . ' to socket ' . $receiverId);
-//                    $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
-//                }
-//            }
         }
 
-        if (in_array($data['status'], $this->errorStatuses, true)) {
+        if (in_array($data['status'], $this->$errorCallStatuses, true)) {
             $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
                 return $socketId !== $data['sender_id'];
             }, ARRAY_FILTER_USE_KEY);
