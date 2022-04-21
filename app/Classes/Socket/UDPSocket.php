@@ -1,13 +1,10 @@
 <?php
 
-
 namespace App\Classes\Socket;
-
 
 use App\Models\Call;
 use App\Models\User;
 use Exception;
-use JsonException;
 use React\Datagram\Factory;
 use React\Datagram\Socket;
 use React\EventLoop\LoopInterface;
@@ -15,104 +12,113 @@ use React\EventLoop\LoopInterface;
 
 class UDPSocket
 {
-    /**
-     * @var string
-     */
     protected string $address;
-
-    /**
-     * @var LoopInterface
-     */
     protected LoopInterface $loop;
-
-    /**
-     * @var array
-     */
     protected array $clients = [];
-
-    /**
-     * @var Socket
-     */
+    protected $voicerAddress;
+    protected array $callAddresses = [];
     protected Socket $socket;
 
-    /**
-     * @param string $address
-     * @param LoopInterface $loop
-     */
     public function __construct(string $address, LoopInterface $loop)
     {
         $this->address = $address;
         $this->loop = $loop;
+        $this->clients = [];
     }
 
-    /**
-     * @throws Exception
-     */
     public function event($data, $address): void
     {
+//        SELECT sender_id, receiver_id FROM `calls`
+//                    WHERE (sender_id = (SELECT id FROM users WHERE call_address = '10.123.0.15:45779') OR receiver_id = (SELECT id FROM users WHERE call_address = '10.123.0.15:45779'))
+//                    AND status = 200 ORDER BY created_at DESC LIMIT 1;
+//        $call = Call::select('sender_id','receiver_id')
+//            ->where(function ($query) use ($address) {
+//                $query->where('sender_id', function ($query) use ($address) {
+//                    $query->select('id')->from('users')->where('call_address', $address);
+//                })->orWhere('receiver_id', function ($query) use ($address) {
+//                    $query->select('id')->from('users')->where('call_address', $address);
+//                });
+//            })->where('status', 200)->orderByDesc('created_at')->first();
 
-        if (str_contains($data, 'sender_id')){
+//
+//        $callRoom = User::select('call_address')
+//            ->whereIn('id',[$call->sender_id,$call->receiver_id])->get();
+//
+//        $receiver = $callRoom->filter(function ($value) use ($address) {
+//            return $value->call_address != $address;
+//        })->toArray();
+//
+//        $receiver = reset($receiver);
+//
+//        $this->socket->send($data, $receiver['call_address']);
+
+        if (str_contains($data, 'sender_id')) {
             $ids = (int)preg_replace('/\D/', '', $data);
-            $voicesId = substr($ids,0,1);
-            $callId = substr($ids,1);
+            $voicesId = substr($ids, 0, 1);
+            $callRoomId = substr($ids, 0, 1);
 
-            $callRoom = Call::where('id',[$callId])->first();
+            $callRoom = Call::find($callRoomId);
 
-            $callAdresses = User::whereIn('call_address',[$callRoom->sender_id,$callRoom->receiver_id])->get();
+//            $clientsAddresses = User::whereIn('id', [$callRoom->sender_id, $callRoom->receiver_id])
+//                ->pluck('call_address')->toArray();
 
-            dump($callAdresses);
+            $this->addClient($callRoom->id, $address);
 
-//            $user = \DB::table('users')
-//                ->select('username','call_address')
-//                ->where('id', [$voicesId])
-//                ->first();
-
-//            dump('Call_adress '. $user->call_address);
-
-            $this->addClient($callRoom->id, $callRoom);
         } else {
             $this->sendMessage($data, $address);
         }
 
     }
 
-    protected function addClient(int $callId, array $addresses)
+    protected function addClient($callRoomId, $address)
     {
-        if (array_key_exists($callId, $this->clients)) {
+        if (array_key_exists($address, $this->clients)) {
             return;
         }
 
-        $this->clients[$callId] = $addresses;
-
-//        $this->broadcast("$name enters chat", $address);
+        $this->clients[$address] = $callRoomId;
+//        if (array_key_exists($callRoomId, $this->clients)) {
+//            return;
+//        }
+//
+//        $this->clients[$callRoomId] = $address;
     }
 
-    protected function removeClient($address)
+    protected function removeClient($callRoomId)
     {
-        $name = $this->clients[$address] ?? '';
+        unset($this->clients[$callRoomId]);
 
-        unset($this->clients[$address]);
-
-        $this->broadcast("$name leaves chat");
+//        $this->broadcast("$name leaves chat");
     }
 
-    protected function broadcast($data, $except = null)
+    protected function broadcast($data, $except)
     {
-        dump('address', $except);
-
-        foreach ($this->clients as $address => $userId) {
-            if ($address === $except) {
-                continue;
-            }
-
+        foreach ($this->clients as $address => $call_id) {
+            if ($address == $except) continue;
+            dump('From ' . $except . ' to ' . $address);
             $this->socket->send($data, $address);
         }
+//            $receiver = array_filter($addresses, function ($address) use ($except) {
+//                return $address !== $except;
+//            });
+//
+//            $receiver = reset($receiver);
+//            dump('From ' . $except . ' to ' . $receiver);
+
+
+//            foreach ($addresses as $address) {
+//                if ($address['call_address'] === $except) {
+//                    continue;
+//                }
+//
+//                dump('send data to ' . $address['call_address'] . ' from ' . $except);
+//                $this->socket->send($data, $address['call_address']);
+//            }
+
     }
 
     protected function sendMessage($data, $address)
     {
-        $name = $this->clients[$address] ?? '';
-
         $this->broadcast($data, $address);
     }
 

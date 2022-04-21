@@ -11,6 +11,7 @@ use App\Repositories\EloquentUserQueries;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 Use Illuminate\Support\Facades\DB;
 
 
@@ -38,18 +39,34 @@ class ChatRoomController extends Controller
             $value->title = $this->chatRoomQueries->getTitleByUserId($id, $value->id);
         });
 
+        return response()->json([
+            "status" => true,
+            "chat_rooms" => $chatRooms
+        ])->setStatusCode(200);
+    }
+
+    public function newChatRoomsByUser(int $chatRoomId, int $userId)
+    {
+        $chatRooms = $this->chatRoomQueries->getGtId($chatRoomId, $userId);
 
         return response()->json([
             "status" => true,
-            "chats" => $chatRooms
+            "chat_rooms" => $chatRooms
         ])->setStatusCode(200);
+    }
+
+    public function show(int $chatRoomId, int $userId)
+    {
+        $chatRoom = $this->chatRoomQueries->getByChatId($chatRoomId, $userId);
+
+        return response()->json([
+            "status" => true,
+            "chat_room" => $chatRoom
+        ]);
     }
 
     /*
      * Create new chatRoom
-     */
-    /**
-     * @throws ChatNotCreated
      */
     public function store(StoreChatroomRequest $request)
     {

@@ -82,18 +82,12 @@ class MessageController extends Controller
     /*
       * Create new message in chatRoom
      */
-    /**
-     * @throws FileNotFoundException
-     * @throws MessageException
-     */
+
     public function store($data)
     {
         return $data['audio'] ? $this->storeAudioMessage($data) : $this->storeTextMessage($data);
     }
 
-    /**
-     * @throws MessageException
-     */
     public function storeTextMessage($message)
     {
         $validator = Validator::make($message, [
@@ -126,10 +120,6 @@ class MessageController extends Controller
         return $newMessage;
     }
 
-    /**
-     * @throws FileNotFoundException
-     * @throws MessageException
-     */
     public function storeAudioMessage($message)
     {
         $validator = Validator::make($message, [

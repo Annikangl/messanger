@@ -48,7 +48,7 @@ class EloquentMessageQueries implements MessageQueries
 
     public function getOldMessage(int $chatRoomId, int $messageId)
     {
-        $result = ChatRoom::find($chatRoomId)
+        $result = ChatRoom::findOrFail($chatRoomId)
             ->messages()
             ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
             ->where('messages.id', '<', [$messageId])

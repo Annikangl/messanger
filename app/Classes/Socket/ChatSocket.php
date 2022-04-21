@@ -149,8 +149,6 @@ class ChatSocket extends BaseSocket
                 "username" => $user->username
             ];
 
-            dump('Response data', $responseData);
-
             $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
                 return $socketId !== $data['sender_id'];
             }, ARRAY_FILTER_USE_KEY);
@@ -159,7 +157,6 @@ class ChatSocket extends BaseSocket
 
             foreach ($this->clients as $client) {
                 if ($client->resourceId === $receiver) {
-                    dump('Make new call to ' . $receiver . ' with status ' . $responseData['status']);
                     $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
                 }
             }
@@ -170,7 +167,10 @@ class ChatSocket extends BaseSocket
             $this->acceptCall($data);
         }
 
-        if (in_array($data['status'], $this->$errorCallStatuses, true)) {
+        // Errors statuses
+
+
+        if (in_array($data['status'], $this->errorCallStatuses, true)) {
             $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
                 return $socketId !== $data['sender_id'];
             }, ARRAY_FILTER_USE_KEY);
@@ -205,10 +205,6 @@ class ChatSocket extends BaseSocket
         return $this->call->store($data);
     }
 
-    /**
-     * @throws JsonException
-     * @throws Exception
-     */
     public function acceptCall(array $data): void
     {
         $call = $this->call->update($data);
@@ -216,14 +212,12 @@ class ChatSocket extends BaseSocket
         $user = User::find($data['sender_id']);
         $user->call_address = $data['call_address'];
 
-        if (!$user->save()) {
-            throw new Exception('User not update IP');
-        }
+        $user->save();
 
         if ($call) {
-
             $responseData = [
-                "status" => $call->status
+                "status" => $call->status,
+                "call_id" => $call->id
             ];
 
             $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
@@ -234,7 +228,7 @@ class ChatSocket extends BaseSocket
 
             foreach ($this->clients as $client) {
                 if ($client->resourceId === $receiver) {
-//                    dump('Send status ' . $responseData['status'] . ' to socket ' . $receiver);
+//                    dump('200', $data);
                     $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
                 }
             }
