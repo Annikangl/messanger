@@ -66,3 +66,9 @@ services:
             - PMA_PASSWORD=root
             - PHP_UPLOAD_MAX_FILESIZE=100MB
 
+
+    redis:
+        image: redis:3
+        ports:
+        -   63791:6379
+

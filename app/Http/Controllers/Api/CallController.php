@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CallController extends Controller
 {
-    public function store(array $request): JsonResponse | Call
+    public function store(array $request)
     {
         $validator = Validator::make($request, [
             'sender_id' => 'required|integer|min:1',

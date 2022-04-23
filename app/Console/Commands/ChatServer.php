@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Classes\Socket\ChatSocket;
+use App\Http\UseCases\User\UserService;
 use http\Env\Request;
 use Illuminate\Console\Command;
 use Illuminate\Support\Env;
@@ -12,36 +13,19 @@ use Ratchet\WebSocket\WsServer;
 
 class ChatServer extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+
     protected $signature = 'websocket:serve';
-    private $port = 6001;
+    protected $description = 'Initializing Websocket server to send and receive messages';
+    private int $port = 6001;
+    private UserService $userService;
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Initializing Websocket server to receive and manage connections';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function __construct(UserService $userService)
     {
         parent::__construct();
+        $this->userService = $userService;
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
     public function handle()
     {
         $this->info('Start websocket server on ' . Env::get('SOCKET_URL') . ' port ' . $this->port);
@@ -49,12 +33,14 @@ class ChatServer extends Command
         $server = IoServer::factory(
             new HttpServer(
                 new WsServer(
-                    new ChatSocket()
+                    new ChatSocket($this->userService)
                 )
             ),
             $this->port
         );
 
         $server->run();
+
+        return 0;
     }
 }

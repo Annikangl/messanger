@@ -13,6 +13,7 @@
         "laravel/framework": "v8.54.0",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
+        "predis/predis": "^1.1",
         "react/datagram": "1.8"
     },
     "require-dev": {

@@ -6,22 +6,21 @@ namespace App\Classes\Socket;
 use App\Classes\Socket\Base\BaseSocket;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\MessageController;
-use App\Models\Call;
+use App\Http\UseCases\User\UserService;
 use App\Models\User;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use JsonException;
 use Ratchet\ConnectionInterface;
 
 class ChatSocket extends BaseSocket
 {
     protected \SplObjectStorage $clients;
+    protected UserService $userService;
     protected MessageController $message;
     protected array $audioClients;
     public CallController $call;
 
-    private array $errorCallStatuses = [
+    private static array $errorCallStatuses = [
         400,
         401,
         402,
@@ -29,9 +28,10 @@ class ChatSocket extends BaseSocket
     ];
 
 
-    public function __construct()
+    public function __construct(UserService $userService)
     {
         $this->clients = new \SplObjectStorage();
+        $this->userService = $userService;
         $this->message = new MessageController();
         $this->call = new CallController();
         $this->audioClients = [];
@@ -40,7 +40,7 @@ class ChatSocket extends BaseSocket
     public function onOpen(ConnectionInterface $conn)
     {
         $this->clients->attach($conn);
-        echo "New connection! ({$conn->resourceId})\n";
+        echo "New connection: ({$conn->resourceId})\n";
     }
 
     public function onMessage(ConnectionInterface $from, $msg)
@@ -61,6 +61,11 @@ class ChatSocket extends BaseSocket
             case "init_call":
                 $data['status'] = (int)$data['status'];
                 $this->initialCall($data);
+                dump($data);
+                break;
+            case "call":
+                $data['status'] = (int)$data['status'];
+                $this->voiceCall($data);
                 break;
             default:
                 $this->onClose($from);
@@ -87,7 +92,7 @@ class ChatSocket extends BaseSocket
             ->update(['socket_id' => $socketId]);
     }
 
-    public function getSocketIdByChatRoom(int $senderId, int $receiverId): \Illuminate\Support\Collection
+    public function getSocketIdByChatRoom(int $senderId, int $receiverId)
     {
         return Db::table('users')
             ->select('socket_id')
@@ -129,24 +134,19 @@ class ChatSocket extends BaseSocket
 
     }
 
-    /**
-     * @throws JsonException
-     * @throws Exception
-     */
     public function initialCall($data)
     {
         // Send call notification to receiver user
         if ($data['status'] === 100) {
             $call = $this->makeOutboundCall($data);
-            $user = User::find($data['sender_id'])->select('username')
-                ->first();
+            $username = User::find($data['sender_id']);
 
             $responseData = [
                 "type" => $data['type'],
                 "status" => $call->status,
                 "call_id" => $call->id,
                 "sender_id" => $data['sender_id'],
-                "username" => $user->username
+                "username" => $username->username
             ];
 
             $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
@@ -169,8 +169,7 @@ class ChatSocket extends BaseSocket
 
         // Errors statuses
 
-
-        if (in_array($data['status'], $this->errorCallStatuses, true)) {
+        if (in_array($data['status'], self::$errorCallStatuses, true)) {
             $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
                 return $socketId !== $data['sender_id'];
             }, ARRAY_FILTER_USE_KEY);
@@ -183,24 +182,14 @@ class ChatSocket extends BaseSocket
                 }
             }
         }
-
     }
 
-    /**
-     * @throws Exception
-     */
-    public function makeOutboundCall(array $data): Call|JsonResponse
+    public function makeOutboundCall(array $data)
     {
         $this->audioClients = [
             $data['sender_id'] => $this->getSocketIdByUser($data['sender_id']),
             $data['receiver_id'] => $this->getSocketIdByUser($data['receiver_id'])
         ];
-
-        $user = User::find($data['sender_id']);
-        $user->call_address = $data['call_address'];
-        if (!$user->save()) {
-            throw new Exception('User not update IP');
-        }
 
         return $this->call->store($data);
     }
@@ -209,10 +198,10 @@ class ChatSocket extends BaseSocket
     {
         $call = $this->call->update($data);
 
-        $user = User::find($data['sender_id']);
-        $user->call_address = $data['call_address'];
-
-        $user->save();
+//        $user = User::find($data['sender_id']);
+//        $user->call_address = $data['call_address'];
+//
+//        $user->save();
 
         if ($call) {
             $responseData = [
@@ -228,11 +217,49 @@ class ChatSocket extends BaseSocket
 
             foreach ($this->clients as $client) {
                 if ($client->resourceId === $receiver) {
-//                    dump('200', $data);
                     $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
                 }
             }
         }
+    }
+
+    public function voiceCall($data)
+    {
+        $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
+            return $socketId !== $data['sender_id'];
+        }, ARRAY_FILTER_USE_KEY);
+
+        $receiver = reset($receiver);
+
+        foreach ($this->clients as $client) {
+            if ($client->resourceId == $receiver) {
+//                dump('Send to ' . $client->resourceId . ' receiver id ' . $receiver);
+                $client->send(json_encode($data, JSON_THROW_ON_ERROR));
+            }
+        }
+//        if ($data['status'] == 201) {
+//            $receiver = array_filter($this->audioClients, function ($socketId) use ($data) {
+//                return $socketId !== $data['sender_id'];
+//            }, ARRAY_FILTER_USE_KEY);
+//
+//            $receiver = reset($receiver); // socket id
+//
+//            dump($data);
+//
+//            $responseData = [
+//                "type" => $data['type'],
+//                "sender_id" => $data['sender_id'],
+//                "voice_audio" => $data['voice_audio']
+//            ];
+//
+//            foreach ($this->clients as $client) {
+//                $client->send(json_encode($responseData));
+////                if ($client->resourceId == $receiver) {
+//////                    dump('Sending voice  to ' . $responseData['sender_id'] . ' socket '. $receiver);
+////                    $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
+////                }
+//            }
+//        }
     }
 }
 

@@ -13,18 +13,18 @@ use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @mixin Builder
+ *
+ * @property int id
+ * @property int socket_id
+ * @property string username
+ * @property string email
+ * @property string password
+ * @property int active
  */
 class  User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var string[]
-     */
     protected $fillable = [
         'socket_id',
         'username',
@@ -35,21 +35,11 @@ class  User extends Authenticatable
     ];
 
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
