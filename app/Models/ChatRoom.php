@@ -2,9 +2,22 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+/**
+ * Class ChatRoom
+ * @package App\Models
+ * @mixin Builder
+ *
+ * @property int $id
+ * @property string $title
+ * @property Carbon $created_at
+ */
 
 class ChatRoom extends Model
 {
@@ -12,7 +25,7 @@ class ChatRoom extends Model
 
     protected $fillable = ['title'];
 
-    public function messages()
+    public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
     }

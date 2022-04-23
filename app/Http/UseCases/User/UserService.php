@@ -17,7 +17,12 @@ class UserService
         ]);
     }
 
-    private function getUser($id): User
+    public function getSocketId($userId)
+    {
+        return User::where('id', $userId)->value('socket_id');
+    }
+
+    public function getUser($id)
     {
         return User::find($id);
     }

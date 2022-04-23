@@ -21,7 +21,7 @@ services:
         -   ./:/var/www/messanger
         depends_on:
             - mysql
-            - mysql-test
+#            - mysql-test
         environment:
             - DB_PORT=3306
             - DB_HOST=mysql
@@ -40,17 +40,17 @@ services:
         command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
 
 
-    mysql-test:
-        image: mysql:5.7
-        ports:
-            -   33062:3306
-        volumes:
-            -   ./storage/docker/mysql-test:/var/lib/mysql
-        environment:
-            - MYSQL_ROOT_PASSWORD=root
-            - MYSQL_DATABASE=messanger_db
-            - TZ=Europe/Moscow
-        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
+#    mysql-test:
+#        image: mysql:5.7
+#        ports:
+#            -   33062:3306
+#        volumes:
+#            -   ./storage/docker/mysql-test:/var/lib/mysql
+#        environment:
+#            - MYSQL_ROOT_PASSWORD=root
+#            - MYSQL_DATABASE=messanger_db
+#            - TZ=Europe/Moscow
+#        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
 
 
     phpmyadmin:
