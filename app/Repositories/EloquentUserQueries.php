@@ -3,9 +3,6 @@
 
 namespace App\Repositories;
 
-
-use App\Models\ChatRoom;
-use App\Models\Friends;
 use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Database\Eloquent\Collection;
@@ -43,12 +40,7 @@ final class EloquentUserQueries implements UserQueries
 
     public function getUsernameById(int $id): string
     {
-        $result = User::find($id)
-            ->select('username')
-            ->first()
-            ->value('username');
-
-        return $result;
+        return User::find($id)->username;
 
     }
 
@@ -60,5 +52,10 @@ final class EloquentUserQueries implements UserQueries
                             ->get();
 
         return $result;
+    }
+
+    public function getByEmail(string $email)
+    {
+        return User::where('email', $email)->first();
     }
 }

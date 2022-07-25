@@ -1,12 +1,12 @@
 docker-up:
-	docker-compose up -d
+	docker compose up -d
 docker-down:
-	docker-compose down
+	docker compose down
 docker-build:
-	docker-compose up --build -d
+	docker compose up --build -d
 
 test:
-	docker-compose exec php-fpm vendor/bin/phpunit --colors=always
+	docker compose exec php-fpm vendor/bin/phpunit --colors=always
 
 perm:
 	sudo chown ${USER}:${USER} bootstrap/cache -R

@@ -6,8 +6,8 @@ use App\Http\Controllers\Api\ChatRoomController;
 use App\Http\Controllers\Api\MessageController;
 
 
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [\App\Http\Controllers\Api\Auth\RegisterController::class, 'register']);
+Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 'login']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
 

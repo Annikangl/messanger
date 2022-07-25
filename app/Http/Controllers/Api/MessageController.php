@@ -128,6 +128,8 @@ class MessageController extends Controller
             'chat_room_id' => 'required|integer'
         ]);
 
+
+
         if ($validator->fails()) {
             return \response()->json([
                 "status" => false,

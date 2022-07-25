@@ -9,9 +9,10 @@ services:
         -   8098:80
         links:
             -   php-fpm
+        depends_on:
+            -   php-fpm
         volumes:
         -   ./:/var/www/messanger
-
 
     php-fpm:
         build:
@@ -21,14 +22,13 @@ services:
         -   ./:/var/www/messanger
         depends_on:
             - mysql
-#            - mysql-test
         environment:
             - DB_PORT=3306
             - DB_HOST=mysql
 
-
     mysql:
         image: mysql:5.7
+        restart: unless-stopped
         ports:
         -   33061:3306
         volumes:
@@ -39,22 +39,9 @@ services:
             - TZ=Europe/Moscow
         command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
 
-
-#    mysql-test:
-#        image: mysql:5.7
-#        ports:
-#            -   33062:3306
-#        volumes:
-#            -   ./storage/docker/mysql-test:/var/lib/mysql
-#        environment:
-#            - MYSQL_ROOT_PASSWORD=root
-#            - MYSQL_DATABASE=messanger_db
-#            - TZ=Europe/Moscow
-#        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
-
-
     phpmyadmin:
-        image: phpmyadmin/phpmyadmin
+        image: phpmyadmin:5.1.3
+        container_name: messanger_phpmyadmin
         restart: always
         ports:
         -   8099:80
@@ -62,10 +49,11 @@ services:
             -   mysql:mysql
         environment:
             - PMA_HOST=mysql
-            - PMA_USER=root
-            - PMA_PASSWORD=root
+#            - PMA_PORT=33061
+#            - PMA_USER=root
+#            - PMA_PASSWORD=root
+            - PMA_ARBITRARY=1
             - PHP_UPLOAD_MAX_FILESIZE=100MB
-
 
     redis:
         image: redis:3

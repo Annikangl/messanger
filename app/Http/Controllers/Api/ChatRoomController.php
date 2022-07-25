@@ -39,6 +39,7 @@ class ChatRoomController extends Controller
             $value->title = $this->chatRoomQueries->getTitleByUserId($id, $value->id);
         });
 
+
         return response()->json([
             "status" => true,
             "chat_rooms" => $chatRooms

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exceptions\UserNotFoundExceprion;
-use App\Http\Requests\RegisterUserRequest;
 use  App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Filesystem\FileExistsException;
@@ -17,17 +16,6 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    public function register(RegisterUserRequest $request)
-    {
-        $credentials = $request->validated();
-
-        $userId = $this->creteUserAccount($credentials);
-
-        return response()->json([
-            "status" => true,
-            "user" => $userId
-        ]);
-    }
 
     /**
      * @throws UserNotFoundExceprion
@@ -87,6 +75,8 @@ class AuthController extends Controller
         return $userId;
     }
 
+
+// TODO move to job
     public function makeUserFolder(string $path)
     {
         if (!Storage::disk('local')->exists($path)) {

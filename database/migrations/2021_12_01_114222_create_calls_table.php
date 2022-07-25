@@ -18,7 +18,7 @@ class CreateCallsTable extends Migration
             $table->integer('sender_id')->unsigned();
             $table->integer('receiver_id')->unsigned();
             $table->smallInteger('status')->nullable();
-            $table->time('duration');
+            $table->time('duration')->nullable();
             $table->foreign('sender_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('receiver_id')->references('id')->on('users')->cascadeOnDelete();
             $table->timestamps();
