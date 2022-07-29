@@ -28,7 +28,7 @@ class RegisterRequest extends FormRequest
                 response()->json([
                     "status" => false,
                     "errors" => $errors
-                ], 422)
+                ], 401)
             );
         }
     }
@@ -43,7 +43,7 @@ class RegisterRequest extends FormRequest
         return [
             'username' => 'required|string|max:150',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|string|min:6|',
+            'password' => 'required|string|min:6',
             'active' => 'required|int'
         ];
     }

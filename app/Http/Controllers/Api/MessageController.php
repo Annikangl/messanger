@@ -33,9 +33,6 @@ class MessageController extends Controller
      * $dialog - collect of messages by ChatRoomId
      * receiver_id -  receiver ID in chat room
      */
-    /**
-     * @throws FileNotFoundException
-     */
     public function index(int $chatRoomId, int $userId): JsonResponse
     {
         $dialog = $this->messageQueries->getWithPaginate($chatRoomId, 15);
@@ -80,97 +77,4 @@ class MessageController extends Controller
         ])->setStatusCode(200);
     }
 
-    /*
-      * Create new message in chatRoom
-     */
-
-    public function store($data)
-    {
-        return $data['audio'] ? $this->storeAudioMessage($data) : $this->storeTextMessage($data);
-    }
-
-    public function storeTextMessage($message)
-    {
-        $validator = Validator::make($message, [
-            'sender_id' => 'required|integer',
-            'chat_room_id' => 'required|integer'
-        ]);
-
-        if ($validator->fails()) {
-            return \response()->json([
-                "status" => false,
-                "errors" => $validator->errors()->all()
-            ]);
-        }
-
-        $userQueries = app(UserQueries::class);
-        $newMessage = null;
-
-        try {
-            Db::transaction(function () use ($message, &$newMessage, $userQueries) {
-                $newMessage = Message::create($message);
-
-                $senderName = $userQueries->getUsernameById($newMessage->sender_id);
-                $newMessage->username = $senderName;
-            });
-        } catch (MessageException $exception) {
-            throw new MessageException('Message not created');
-        }
-
-
-        return $newMessage;
-    }
-
-    public function storeAudioMessage($message)
-    {
-        $validator = Validator::make($message, [
-            'sender_id' => 'required|integer',
-            'audio' => 'required',
-            'chat_room_id' => 'required|integer'
-        ]);
-
-
-
-
-        if ($validator->fails()) {
-            return \response()->json([
-                "status" => false,
-                "errors" => $validator->errors()->all()
-            ]);
-        }
-
-        $audioMessage = base64_decode($message['audio']);
-        $path = 'user-' . $message['sender_id'];
-        $audioMessagePath = 'user-' . $message['sender_id'] . '/voicemessages/voice_' . date('d:m:Y H:i:s') . '.arm';
-
-//        if (!Storage::disk('local')->exists($path)) {
-//            (new AuthController())->makeUserFolder($path);
-//        }
-
-        Storage::disk('local')->put($audioMessagePath, $audioMessage);
-
-        $userQueries = app(UserQueries::class);
-        $newMessage = null;
-
-        try {
-            Db::transaction(function () use ($message, $userQueries, &$newMessage, $audioMessagePath) {
-                $newMessage = Message::create([
-                    'sender_id' => $message['sender_id'],
-                    'message' => null,
-                    'audio' => $audioMessagePath,
-                    'chat_room_id' => $message['chat_room_id']
-                ]);
-
-                $senderName = $userQueries->getUsernameById($newMessage->sender_id);
-                $newMessage->username = $senderName;
-            });
-        } catch (MessageException $exception) {
-            throw new MessageException('Message not created');
-        }
-
-        $responseAudio = Storage::disk('local')->get($newMessage->audio);
-        $newMessage->audio = base64_encode($responseAudio);
-
-        return $newMessage;
-    }
 }
