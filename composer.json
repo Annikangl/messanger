@@ -10,7 +10,7 @@
         "cboden/ratchet": "^0.4.3",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "7.4.5",
-        "laravel/framework": "v8.54.0",
+        "laravel/framework": "v8.75.0",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
         "predis/predis": "^1.1",
