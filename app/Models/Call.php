@@ -18,13 +18,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $duration;
  *
  * @method forUser(int $userId)
+ * @method greatThen(int $id, int $userId)
  */
-
 class Call extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['sender_id','receiver_id','status','duration'];
+    protected $fillable = ['sender_id', 'receiver_id', 'status', 'duration'];
 
     public const STATUS_CALLING = 100;
     public const STATUS_ACCEPTED = 200;
@@ -49,7 +49,6 @@ class Call extends Model
     {
         $this->update([
             'status' => $status
-
         ]);
     }
 
@@ -82,8 +81,17 @@ class Call extends Model
             ->with(['caller:id,username']);
     }
 
+    public function scopeGreatThen(Builder $query, $id, $userId)
+    {
+        return $query->where(function ($query) use ($userId) {
+            $query->where('sender_id', $userId)->orWhere('receiver_id', $userId);
+        })->where(function ($query) use ($id) {
+            $query->where('id', '>', $id);
+        })->with(['caller:id,username']);
+    }
+
     public function caller()
     {
-        return $this->belongsTo(User::class,'receiver_id');
+        return $this->belongsTo(User::class, 'receiver_id');
     }
 }

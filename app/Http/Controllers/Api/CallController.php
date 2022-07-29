@@ -28,6 +28,13 @@ class CallController extends Controller
             ->setStatusCode(200);
     }
 
+    public function listGtId($id, $userId)
+    {
+        $calls = Call::greatThen($id, $userId)->get();
+
+        return response()->json(['status' => true, 'calls' => $calls]);
+    }
+
     public function store(array $request)
     {
         $validator = Validator::make($request, [
