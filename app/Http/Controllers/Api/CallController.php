@@ -11,61 +11,19 @@ use Illuminate\Support\Facades\Validator;
 
 class CallController extends Controller
 {
-    private $callRepository;
-    private $callService;
-
-    public function __construct(CallQueries $callRepository, AudioCallService $callService)
+    public function list(int $userId): JsonResponse
     {
-        $this->callRepository = $callRepository;
-        $this->callService = $callService;
-    }
-
-    public function list(int $userId)
-    {
-        $calls = $this->callRepository->getByUser($userId);
+        $calls = Call::forUser($userId)->latest()->get();
 
         return response()->json(['status' => true, 'calls' => $calls])
             ->setStatusCode(200);
     }
 
-    public function listGtId($id, $userId)
+    public function listGtId($id, $userId): JsonResponse
     {
         $calls = Call::greatThen($id, $userId)->get();
 
-        return response()->json(['status' => true, 'calls' => $calls]);
-    }
-
-    public function store(array $request)
-    {
-        $validator = Validator::make($request, [
-            'sender_id' => 'required|integer|min:1',
-            'receiver_id' => 'required|integer|min:1',
-            'status' => 'required'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                "status" => false,
-                "errors" => $validator->errors()->all()
-            ],503);
-        }
-
-        return Call::create([
-            "sender_id" => $request['sender_id'],
-            "receiver_id" => $request['receiver_id'],
-            "status" => $request['status'],
-        ]);
-    }
-
-    public function update(array $request)
-    {
-//        $request = new UpdateCallRequest($request);
-//        $validated = $request->validated();
-
-        $call = Call::find($request['call_id']);
-        $call->status = $request['status'];
-        $call->save();
-
-        return $call;
+        return response()->json(['status' => true, 'calls' => $calls])
+            ->setStatusCode(200);
     }
 }

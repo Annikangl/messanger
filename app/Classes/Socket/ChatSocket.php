@@ -57,7 +57,6 @@ class ChatSocket extends BaseSocket
             case "init_call":
                 $data['status'] = (int)$data['status'];
                 $this->initialCall($data);
-                dump($data);
                 break;
             case "call":
                 $data['status'] = (int)$data['status'];
@@ -84,14 +83,6 @@ class ChatSocket extends BaseSocket
         $conn->close();
     }
 
-    public function getSocketIdByChatRoom(int $senderId, int $receiverId)
-    {
-        return Db::table('users')
-            ->select('socket_id')
-            ->whereIn('id', [$senderId, $receiverId])
-            ->get();
-    }
-
     public function sendMessage($data, $from): void
     {
         $message = null;
@@ -103,7 +94,7 @@ class ChatSocket extends BaseSocket
             $this->onError($from, $exception);
         }
 
-        $receiverIds = $this->getSocketIdByChatRoom($data['sender_id'], $data['receiver_id'])->toArray();
+        $receiverIds = $this->getSocketIdByChatRoom($data['sender_id'], $data['receiver_id']);
 
         $responseData = [
             "type" => $data['type'],
@@ -116,14 +107,7 @@ class ChatSocket extends BaseSocket
             "created_at" => $message->created_at
         ];
 
-//        $this->sendTo($receiverIds, $responseData);
-        foreach ($this->clients as $client) {
-            foreach ($receiverIds as $receiver) {
-                if ($client->resourceId === $receiver->socket_id) {
-                    $client->send(json_encode($responseData, JSON_THROW_ON_ERROR));
-                }
-            }
-        }
+        $this->broadcast($receiverIds, $responseData);
     }
 
     public function initialCall($data)
@@ -195,21 +179,22 @@ class ChatSocket extends BaseSocket
         }
     }
 
-    private function sendTo(array|int $receivers, $data): void
+    private function broadcast($receivers, $data): void
     {
-        if (is_array($receivers)) {
-            foreach ($receivers as $receiver) {
-                foreach ($this->clients as $client) {
-                    if ($client->resourceId === $receiver->socket_id) {
-                        $client->send(json_encode($data, JSON_THROW_ON_ERROR));
-                    }
-                }
-            }
-        } else {
+        foreach ($receivers as $receiver) {
             foreach ($this->clients as $client) {
-                if ($client->resourceId == $receivers) {
+                if ($client->resourceId === $receiver->socket_id) {
                     $client->send(json_encode($data, JSON_THROW_ON_ERROR));
                 }
+            }
+        }
+    }
+
+    private function sendTo(array|int $receivers, $data): void
+    {
+        foreach ($this->clients as $client) {
+            if ($client->resourceId == $receivers) {
+                $client->send(json_encode($data, JSON_THROW_ON_ERROR));
             }
         }
     }
@@ -222,5 +207,14 @@ class ChatSocket extends BaseSocket
 
         return reset($receiver);
     }
+
+    private function getSocketIdByChatRoom(int $senderId, int $receiverId)
+    {
+        return Db::table('users')
+            ->select('socket_id')
+            ->whereIn('id', [$senderId, $receiverId])
+            ->get();
+    }
+
 }
 
