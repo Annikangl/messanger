@@ -24,10 +24,8 @@ class CallController extends Controller
     {
         $calls = $this->callRepository->getByUser($userId);
 
-        return response()->json([
-            'status' => true,
-            'calls' => $calls
-        ])->setStatusCode(200);
+        return response()->json(['status' => true, 'calls' => $calls])
+            ->setStatusCode(200);
     }
 
     public function store(array $request)
