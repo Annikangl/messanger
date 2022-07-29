@@ -19,12 +19,21 @@ class AudioCallService
         return $result;
     }
 
-    public function changeStatus($id, $status)
+    public function close($id, $status, $duration)
     {
-        $call = Call::find($id);
-        $call->status = $status;
-        $call->save();
+        $call = $this->getCall($id);
+        $call->close($status, $duration);
+    }
 
+    public function accept($id, $status)
+    {
+        $call = $this->getCall($id);
+        $call->accept($status);
         return $call;
+    }
+
+    private function getCall($id)
+    {
+        return Call::find($id);
     }
 }

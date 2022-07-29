@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Repositories\EloquentCallQueries;
 use App\Repositories\EloquentChatRoomQueries;
 use App\Repositories\EloquentMessageQueries;
 use App\Repositories\EloquentUserQueries;
+use App\Repositories\Interfaces\CallQueries;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use App\Repositories\Interfaces\MessageQueries;
 use App\Repositories\Interfaces\UserQueries;
@@ -33,6 +35,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(
             MessageQueries::class,
             EloquentMessageQueries::class
+        );
+
+        $this->app->bind(
+            CallQueries::class,
+            EloquentCallQueries::class
         );
 
     }

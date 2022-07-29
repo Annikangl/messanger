@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\Calls\StatusException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $receiver_id;
  * @property int $status;
  * @property string $duration;
+ *
+ * @method forUser(int $userId)
  */
 
 class Call extends Model
@@ -46,6 +49,41 @@ class Call extends Model
     {
         $this->update([
             'status' => $status
+
         ]);
+    }
+
+    public function accept($status)
+    {
+        if ($this->isAccepted()) {
+            throw new StatusException('Call already accepted');
+        }
+
+        if ($status !== self::STATUS_ACCEPTED) {
+            throw new StatusException('Ivalid status');
+        }
+
+        $this->update([
+            'status' => self::STATUS_ACCEPTED
+        ]);
+    }
+
+    public function close($status, $duration): void
+    {
+        $this->update([
+            'status' => $status,
+            'duration' => $duration
+        ]);
+    }
+
+    public function scopeForUser(Builder $query, int $userId)
+    {
+        return $query->where('sender_id', $userId)->orWhere('receiver_id', $userId)
+            ->with(['caller:id,username']);
+    }
+
+    public function caller()
+    {
+        return $this->belongsTo(User::class,'receiver_id');
     }
 }

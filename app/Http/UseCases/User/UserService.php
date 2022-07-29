@@ -4,6 +4,7 @@
 namespace App\Http\UseCases\User;
 
 
+use App\Models\Call;
 use App\Models\User;
 
 class UserService
@@ -25,5 +26,10 @@ class UserService
     public function getUser($id)
     {
         return User::find($id);
+    }
+
+    public function getCallStatus(int $userId)
+    {
+        return Call::forUser($userId)->value('status');
     }
 }

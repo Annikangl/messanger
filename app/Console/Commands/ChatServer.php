@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Classes\Socket\ChatSocket;
 use App\Http\UseCases\Call\AudioCallService;
+use App\Http\UseCases\Messages\MessagesService;
 use App\Http\UseCases\User\UserService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Env;
@@ -19,13 +20,15 @@ class ChatServer extends Command
     private int $port = 6001;
     private UserService $userService;
     private AudioCallService $callService;
+    private MessagesService $messagesService;
 
 
-    public function __construct(UserService $userService, AudioCallService $callService)
+    public function __construct(UserService $userService, AudioCallService $callService, MessagesService $messagesService)
     {
         parent::__construct();
         $this->userService = $userService;
         $this->callService = $callService;
+        $this->messagesService = $messagesService;
     }
 
     public function handle()
@@ -35,7 +38,7 @@ class ChatServer extends Command
         $server = IoServer::factory(
             new HttpServer(
                 new WsServer(
-                    new ChatSocket($this->userService, $this->callService)
+                    new ChatSocket($this->userService, $this->callService, $this->messagesService)
                 )
             ),
             $this->port

@@ -11,6 +11,7 @@ use App\Repositories\Interfaces\UserQueries;
 use http\Client\Request;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -130,6 +131,7 @@ class MessageController extends Controller
 
 
 
+
         if ($validator->fails()) {
             return \response()->json([
                 "status" => false,
@@ -141,9 +143,9 @@ class MessageController extends Controller
         $path = 'user-' . $message['sender_id'];
         $audioMessagePath = 'user-' . $message['sender_id'] . '/voicemessages/voice_' . date('d:m:Y H:i:s') . '.arm';
 
-        if (!Storage::disk('local')->exists($path)) {
-            (new AuthController())->makeUserFolder($path);
-        }
+//        if (!Storage::disk('local')->exists($path)) {
+//            (new AuthController())->makeUserFolder($path);
+//        }
 
         Storage::disk('local')->put($audioMessagePath, $audioMessage);
 
