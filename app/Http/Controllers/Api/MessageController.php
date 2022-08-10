@@ -57,6 +57,18 @@ class MessageController extends Controller
         ])->setStatusCode(200);
     }
 
+    public function trashedList(int $chatRoomId, int $userId)
+    {
+        $dialog = $this->messageQueries->getTrashedMEssages($chatRoomId);
+        $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
+
+        return response()->json([
+            'status' => true,
+            'receiver_id' => $receiver_id,
+            'dialog' => array_reverse($dialog->toArray()),
+        ])->setStatusCode(200);
+    }
+
     public function newOrAllMessages(int $chatRoomId, int $userId,int $messageId, $old = null): JsonResponse
     {
         $old ? $dialog = $this->messageQueries->getOldMessage($chatRoomId, $messageId)

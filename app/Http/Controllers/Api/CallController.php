@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\UseCases\Call\AudioCallService;
-use App\Repositories\Interfaces\CallQueries;
 use Illuminate\Http\JsonResponse;
 use App\Models\Call;
-use Illuminate\Support\Facades\Validator;
 
 class CallController extends Controller
 {

@@ -3,32 +3,31 @@
 
 namespace App\Repositories;
 
-
 use App\Models\ChatRoom;
 use App\Models\User;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use function React\Promise\map;
 
 class EloquentChatRoomQueries implements ChatRoomQueries
 {
-
-    public function getListByUserId($id): Collection
+    public function getListByUser($id): Collection
     {
         $result = DB::table('chat_room_user')
             ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
             ->join('users', 'chat_room_user.user_id', 'users.id')
             ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-            ->select('chat_rooms.id', 'chat_rooms.title','messages.message AS last_message','messages.updated_at')
-            ->where('users.id', $id)
-            ->whereIn('messages.id', function ($query) {
-                $query->select(DB::raw('MAX(messages.id)'))->from('messages')->groupBy('messages.chat_room_id');
+            ->select('chat_rooms.id','users.username AS title','messages.id AS message_id','messages.message AS last_message','messages.updated_at')
+            ->where('users.id','<>', $id)
+            ->whereIn('chat_rooms.id', function (Builder $query) use ($id) {
+                $query->select('chat_room_id')->from('chat_room_user')->where('user_id', $id);
+            })
+            ->whereIn('messages.id', function (Builder $query) {
+                $query->selectRaw('MAX(messages.id)')->from('messages')->whereNull('deleted_at')->groupBy('messages.chat_room_id');
             })
             ->orderBy('messages.created_at', 'desc')
             ->get();
-
 
         return $result;
     }
@@ -41,12 +40,12 @@ class EloquentChatRoomQueries implements ChatRoomQueries
             $query->select(DB::raw('MAX(messages.id)'))->from('messages')->groupBy('messages.chat_room_id');
         })->get();
 
-        $result = $message->map(function ($last_message) use ($chatRoom, $userId) {
+        $result = $message->map(function ($message) use ($chatRoom, $userId) {
             return [
                 'id' => $chatRoom->id,
                 'title' => $this->getTitleByUserId($userId, $chatRoom->id),
-                'last_message' => $last_message->last_message,
-                'updated_at' => $chatRoom->updated_at
+                'last_message' => $message->last_message,
+                'updated_at' => $chatRoom->updated_at,
             ];
         });
 
@@ -61,7 +60,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
             ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
             ->join('users', 'chat_room_user.user_id', 'users.id')
             ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-            ->select('chat_rooms.id', 'chat_rooms.title', 'messages.message AS last_message', 'messages.updated_at')
+            ->select('chat_rooms.id', 'chat_rooms.title','messages.id as message_id', 'messages.message AS last_message', 'messages.updated_at')
             ->where('users.id', $userId)
             ->where('chat_rooms.id', '>', $chatRoomId)
             ->whereIn('messages.id', function ($query) {
@@ -73,10 +72,9 @@ class EloquentChatRoomQueries implements ChatRoomQueries
         return $chatRooms;
     }
 
-    public function getByUserId(int $id): \Illuminate\Database\Eloquent\Collection
+    public function getUser(int $id)
     {
-        $result = User::find($id);
-        return $result;
+        return User::find($id);
     }
 
     public function getTitleByUserId(int $userId, int $chatRoomId)
@@ -84,7 +82,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
         $result = ChatRoom::find($chatRoomId)
             ->users()
             ->select('username')
-            ->where('user_id','<>',[$userId])
+            ->where('user_id','<>', $userId)
             ->value('username');
 
         return $result;

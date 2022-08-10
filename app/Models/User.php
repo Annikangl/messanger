@@ -33,7 +33,6 @@ class  User extends Authenticatable
         'active'
     ];
 
-
     protected $hidden = [
         'password',
         'remember_token',
@@ -48,7 +47,7 @@ class  User extends Authenticatable
      */
     public function chatRooms(): BelongsToMany
     {
-        return $this->belongsToMany(ChatRoom::class)
+        return $this->belongsToMany(ChatRoom::class, 'chat_room_user')
             ->withTimestamps();
     }
 
@@ -60,5 +59,10 @@ class  User extends Authenticatable
     public function calls()
     {
         return $this->hasMany(Call::class, 'sender_id', 'id');
+    }
+
+    public function byUser()
+    {
+
     }
 }

@@ -15,11 +15,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/{id}', [UserController::class, 'show'])->name('show');
         Route::get('/{id}/friends', [UserController::class, 'friends'])->name('friends');
-        Route::get('/{id}/search/{username}', [UserController::class, 'searchUser'])->where('search','.*');
+        Route::get('/{id}/search/{username}', [UserController::class, 'searchUser'])->where('username','.*');
     });
 
     Route::group(['prefix' => 'chatroom', 'as' => 'chatroom.'], function () {
-        Route::get('/{chatRoomId}/user/{userId}', [ChatRoomController::class, 'show'])->name('show');
+//        Route::get('/{chatRoomId}/user/{userId}', [ChatRoomController::class, 'show'])->name('show');
         Route::get('/user/{id}', [ChatRoomController::class, 'chatRoomsByUser'])->name('listByUser');
         Route::get('/{chatRoomId}/user/{userId}/new', [ChatRoomController::class, 'newChatRoomsByUser'])->name('newListByUser');
         Route::post('/', [ChatRoomController::class, 'store'])->name('store');
@@ -29,6 +29,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::group(['prefix' => 'call', 'as' => 'call.'], function () {
         Route::get('/user/{userId}', [CallController::class, 'list']);
         Route::get('/{id}/user/{userId}/gt', [CallController::class, 'listGtId'])->name('gt-id');
+    });
+
+    Route::group(['prefix' => 'message', 'as' => 'message.'], function () {
+        Route::get('/chatroom/{chatRoomId}/user/{userId}/dialog/trashed', [MessageController::class, 'trashedList']);
     });
 
 

@@ -8,6 +8,7 @@ use App\Exceptions\MessageException;
 use App\Http\UseCases\Call\AudioCallService;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Http\UseCases\User\UserService;
+use App\Models\User;
 use Exception;
 use http\Exception\RuntimeException;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,7 @@ class ChatSocket extends BaseSocket
                 break;
             case "init_call":
                 $data['status'] = (int)$data['status'];
+                dump($data);
                 $this->initialCall($data);
                 break;
             case "call":
@@ -64,7 +66,12 @@ class ChatSocket extends BaseSocket
                 break;
             case "close_call":
                 $data['status'] = (int)$data['status'];
+                dump($data);
                 $this->closeVoiceCall($data);
+                break;
+            case "remove_message":
+                dump($data);
+                $this->removeMessage($from, $data);
                 break;
             default:
                 $this->onClose($from);
@@ -122,7 +129,8 @@ class ChatSocket extends BaseSocket
     public function makeOutboundCall(array $data): void
     {
         $call = $this->callService->create($data);
-        $user = $this->userService->getUser($data['sender_id']);
+        $user = $this->getUser($data['sender_id']);
+
 
         $this->audioClients[$call->id] = [
             $data['sender_id'] => $this->userService->getSocketId($data['sender_id']),
@@ -148,6 +156,12 @@ class ChatSocket extends BaseSocket
 
         $this->sendTo($sender, $senderResponseData);
         $this->sendTo($receiver, $receiverResponseData);
+
+        if ($this->callService->checkExist($data['receiver_id'])) {
+            $this->sendTo($sender, ['status' => 500, "username" => $user->username]);
+            $this->sendTo($receiver, ['status' => 501, "username" => $user->username]);
+            $this->callService->close($call->id, 500);
+        }
     }
 
     public function acceptCall(array $data): void
@@ -179,6 +193,18 @@ class ChatSocket extends BaseSocket
         }
     }
 
+    public function removeMessage($from, mixed $data)
+    {
+        try {
+            $this->messagesService->removeForAll($data['message_id']);
+            [$sender, $receiver] = [$this->userService->getSocketId($data['sender_id']), $this->userService->getSocketId($data['receiver_id'])];
+            $this->sendTo($sender, $data);
+            $this->sendTo($receiver, $data);
+        } catch (\DomainException $exception) {
+            $this->sendTo($from, (array)$exception->getMessage());
+        }
+    }
+
     private function broadcast($receivers, $data): void
     {
         foreach ($receivers as $receiver) {
@@ -190,10 +216,11 @@ class ChatSocket extends BaseSocket
         }
     }
 
-    private function sendTo(array|int $receivers, $data): void
+    private function sendTo(int $receiver, array $data): void
     {
         foreach ($this->clients as $client) {
-            if ($client->resourceId == $receivers) {
+            if ($client->resourceId == $receiver) {
+                dump('Send data to ' . $receiver);
                 $client->send(json_encode($data, JSON_THROW_ON_ERROR));
             }
         }
@@ -214,6 +241,11 @@ class ChatSocket extends BaseSocket
             ->select('socket_id')
             ->whereIn('id', [$senderId, $receiverId])
             ->get();
+    }
+
+    public function getUser($id)
+    {
+        return User::find($id);
     }
 
 }

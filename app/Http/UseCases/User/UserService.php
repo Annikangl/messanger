@@ -23,11 +23,6 @@ class UserService
         return User::where('id', $userId)->value('socket_id');
     }
 
-    public function getUser($id)
-    {
-        return User::find($id);
-    }
-
     public function getCallStatus(int $userId)
     {
         return Call::forUser($userId)->value('status');

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class Message
@@ -24,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = ['sender_id', 'message', 'audio', 'chat_room_id'];
 
@@ -50,6 +52,13 @@ class Message extends Model
         } else {
             $this->attributes['message'] = $value;
         }
+    }
+
+    public function scopeLastInChat(Builder $query): Builder
+    {
+        return $query->select('message AS last_message', 'updated_at')->whereIn('id', function ($query) {
+            $query->select(DB::raw('MAX(messages.id)'))->from('messages')->groupBy('messages.chat_room_id');
+        })->orderBy('created_at', 'DESC');
     }
 
 }

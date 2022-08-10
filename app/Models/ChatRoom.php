@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $title
  * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 
 class ChatRoom extends Model
@@ -32,7 +33,12 @@ class ChatRoom extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'chat_room_user');
+    }
+
+    public function scopeGreatThen(Builder $query, int $userId)
+    {
+        return;
     }
 
 }

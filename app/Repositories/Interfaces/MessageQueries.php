@@ -11,4 +11,5 @@ interface MessageQueries
     public function getWithoutPaginate(int $chatRoomId);
     public function getNewMessage(int $chatRoomId, int $messageId);
     public function getOldMessage(int $chatRoomId, int $messageId);
+    public function getTrashedMEssages(int $chatRoomId);
 }

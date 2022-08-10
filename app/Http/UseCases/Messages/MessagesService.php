@@ -81,6 +81,15 @@ class MessagesService
         }
     }
 
+    public function removeForAll(int $message_id): void
+    {
+        $message = $this->getMessage($message_id);
+        if (!$message) {
+            throw new \DomainException('Message already deleted');
+        }
+        $message->delete();
+    }
+
     private function getChatRoom($id): ChatRoom
     {
         return ChatRoom::find($id);
@@ -89,6 +98,11 @@ class MessagesService
     private function getUser($id): User
     {
         return User::find($id);
+    }
+
+    private function getMessage($id)
+    {
+        return Message::find($id);
     }
 
     private function getAudio($path): string

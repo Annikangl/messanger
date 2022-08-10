@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\ChatNotCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreChatroomRequest;
+use App\Http\UseCases\Messages\MessagesService;
 use App\Models\ChatRoom;
+use App\Models\Message;
 use App\Models\User;
 use App\Repositories\EloquentUserQueries;
 use App\Repositories\Interfaces\ChatRoomQueries;
@@ -20,12 +22,14 @@ class ChatRoomController extends Controller
     public MessageController $message;
     private ChatRoomQueries $chatRoomQueries;
     private EloquentUserQueries $eloquentUserQueries;
+    private $messageSerive;
 
-    public function __construct()
+    public function __construct(MessagesService $messagesService)
     {
         $this->message = app(MessageController::class);
         $this->chatRoomQueries = app(ChatRoomQueries::class);
         $this->eloquentUserQueries = app(EloquentUserQueries::class);
+        $this->messageSerive = $messagesService;
     }
 
     /*
@@ -33,77 +37,73 @@ class ChatRoomController extends Controller
      */
     public function chatRoomsByUser(int $id): JsonResponse
     {
-        $chatRooms = $this->chatRoomQueries->getListByUserId($id);
+        $chatRooms = $this->chatRoomQueries->getListByUser($id);
 
-        $chatRooms->each(function ($value) use ($id) {
-            $value->title = $this->chatRoomQueries->getTitleByUserId($id, $value->id);
-        });
+//        $chatRooms->each(function ($value) use ($id) {
+//            $value->title = $this->chatRoomQueries->getTitleByUserId($id, $value->id);
+//        });
 
-
-        return response()->json([
-            "status" => true,
-            "chat_rooms" => $chatRooms
-        ])->setStatusCode(200);
+        return response()->json(["status" => true, "chat_rooms" => $chatRooms])
+            ->setStatusCode(200);
     }
 
     public function newChatRoomsByUser(int $chatRoomId, int $userId)
     {
         $chatRooms = $this->chatRoomQueries->getGtId($chatRoomId, $userId);
 
-        return response()->json([
-            "status" => true,
-            "chat_rooms" => $chatRooms
-        ])->setStatusCode(200);
+        $chatRooms->each(function ($value) use ($userId) {
+            $value->title = $this->chatRoomQueries->getTitleByUserId($userId, $value->id);
+        });
+
+        return response()->json(["status" => true, "chat_rooms" => $chatRooms])
+            ->setStatusCode(200);
     }
 
-    public function show(int $chatRoomId, int $userId)
-    {
-        $chatRoom = $this->chatRoomQueries->getByChatId($chatRoomId, $userId);
-
-        return response()->json([
-            "status" => true,
-            "chat_room" => $chatRoom
-        ]);
-    }
+//    public function show(int $chatRoomId, int $userId)
+//    {
+//        $chatRoom = $this->chatRoomQueries->getByChatId($chatRoomId, $userId);
+//
+//        return response()->json([
+//            "status" => true,
+//            "chat_room" => $chatRoom
+//        ]);
+//    }
 
     /*
      * Create new chatRoom
      */
     public function store(StoreChatroomRequest $request)
     {
-        $request_data = $request->validated();
-
         $chatRoom = null;
-        $chatRoomId = $this->existChatRoomId($request_data);
+        $chatRoomId = $this->existChatRoomId($request);
 
         if (!$chatRoomId) {
             try {
-                Db::transaction(function () use ($request_data, &$chatRoom) {
+                Db::transaction(function () use ($request, &$chatRoom) {
                     $chatRoom = new ChatRoom();
-                    $chatRoom->title = $request_data['title'];
+                    $chatRoom->title = $request['title'];
 
                     if(!$chatRoom->save()) {
                         throw new ChatNotCreated('Chat not created');
                     }
 
                     $chatRoom->users()->attach([
-                            $request_data['sender_id'],
-                            $request_data['receiver_id']
+                            $request['sender_id'],
+                            $request['receiver_id']
                         ]
                     );
 
                     $message_data = [
-                        'sender_id' => $request_data['sender_id'],
+                        'sender_id' => $request['sender_id'],
                         'message' => "Чат создан!",
                         'audio' => null,
                         'chat_room_id' => $chatRoom->id
                     ];
 
-                    $systemMessage = $this->message->store($message_data);
+                    $systemMessage = $this->messageSerive->create($message_data);
                     if (!$systemMessage) {
                         throw new ChatNotCreated('Can not send system message to new chat');
                     }
-
                 }, 3);
             } catch (\Exception $exception) {
                 return $exception->getMessage();
@@ -114,7 +114,6 @@ class ChatRoomController extends Controller
             "status" => true,
             "chat_room_id" => $chatRoom->id ?? $chatRoomId
         ])->setStatusCode(201);
-
     }
 
     public function existChatRoomId($data)
@@ -124,11 +123,16 @@ class ChatRoomController extends Controller
 
         foreach ($senderChatRooms as $key => $senderChat) {
             if ($receiverChatRoms->contains($senderChat)) {
-                return $senderChat->chat_room;
+                return $senderChat->chat_room_id;
             }
         }
 
         return false;
+    }
+
+    private function getChatRoom($id)
+    {
+        return ChatRoom::query()->find($id);
     }
 
 

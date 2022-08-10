@@ -51,8 +51,8 @@ final class EloquentUserQueries implements UserQueries
     public function chatroomByUser(int $id)
     {
         $result = DB::table('chat_room_user')
-                            ->select('chat_room_id AS chat_room')
-                            ->where('user_id', [$id])
+                            ->select('chat_room_id')
+                            ->where('user_id', $id)
                             ->get();
 
         return $result;

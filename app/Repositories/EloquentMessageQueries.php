@@ -5,6 +5,7 @@ namespace App\Repositories;
 
 
 use App\Models\ChatRoom;
+use App\Models\Message;
 use App\Repositories\Interfaces\MessageQueries;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\Paginator;
@@ -12,13 +13,26 @@ use Illuminate\Pagination\Paginator;
 class EloquentMessageQueries implements MessageQueries
 {
 
-    public function getWithPaginate(int $chatRoomId, $perPage): Paginator
+    public function getWithPaginate(int $chatRoomId, $perPage)
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
             ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
             ->latest('messages.created_at')
             ->simplePaginate($perPage);
+
+        return $result;
+    }
+
+    public function getTrashedMEssages($chatRoomId)
+    {
+        $result = ChatRoom::find($chatRoomId)
+            ->messages()
+            ->withTrashed()
+            ->whereNotNull('deleted_at')
+            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message')
+            ->latest('messages.deleted_at')
+            ->get();
 
         return $result;
     }
