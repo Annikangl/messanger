@@ -45,15 +45,15 @@ final class EloquentUserQueries implements UserQueries
     public function getUsernameById(int $id): string
     {
         return User::find($id)->username;
-
     }
 
     public function chatroomByUser(int $id)
     {
-        $result = DB::table('chat_room_user')
-                            ->select('chat_room_id')
-                            ->where('user_id', $id)
-                            ->get();
+        $result = User::query()->find($id)->chatRooms->pluck('id');
+//        $result = DB::table('chat_room_user')
+//                            ->select('chat_room_id')
+//                            ->where('user_id', $id)
+//                            ->get();
 
         return $result;
     }

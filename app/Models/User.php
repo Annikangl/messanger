@@ -19,6 +19,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string email
  * @property string password
  * @property int active
+ *
+ * @method WithChatRooms($userId)
  */
 class  User extends Authenticatable
 {
@@ -61,8 +63,8 @@ class  User extends Authenticatable
         return $this->hasMany(Call::class, 'sender_id', 'id');
     }
 
-    public function byUser()
+    public function scopeWithChatRooms(Builder $query, $userId)
     {
-
+        return $query->find($userId)->chatRooms->pluck('id');
     }
 }

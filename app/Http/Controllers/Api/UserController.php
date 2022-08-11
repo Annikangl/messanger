@@ -65,10 +65,8 @@ class UserController extends Controller
             throw new NotFoundException('User not found by username ' . $username);
         }
 
-        return response()->json([
-            "status" => 200,
-            "user" => $user
-        ]);
+        return response()->json(["status" => 200, "user" => $user])
+            ->setStatusCode(200);
 
     }
 }

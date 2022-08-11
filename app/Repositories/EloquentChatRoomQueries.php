@@ -12,21 +12,21 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentChatRoomQueries implements ChatRoomQueries
 {
-    public function getListByUser($id): Collection
+    public function getListByUser(int $userId): Collection
     {
         $result = DB::table('chat_room_user')
             ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
             ->join('users', 'chat_room_user.user_id', 'users.id')
             ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
             ->select('chat_rooms.id','users.username AS title','messages.id AS message_id','messages.message AS last_message','messages.updated_at')
-            ->where('users.id','<>', $id)
-            ->whereIn('chat_rooms.id', function (Builder $query) use ($id) {
-                $query->select('chat_room_id')->from('chat_room_user')->where('user_id', $id);
+            ->where('users.id','<>', $userId)
+            ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {
+                $query->select('chat_room_id')->from('chat_room_user')->where('user_id', $userId);
             })
             ->whereIn('messages.id', function (Builder $query) {
                 $query->selectRaw('MAX(messages.id)')->from('messages')->whereNull('deleted_at')->groupBy('messages.chat_room_id');
             })
-            ->orderBy('messages.created_at', 'desc')
+            ->orderByDesc('messages.created_at')
             ->get();
 
         return $result;
@@ -52,19 +52,26 @@ class EloquentChatRoomQueries implements ChatRoomQueries
         return $result;
     }
 
-//    Gt - great than id
-
-    public function getGtId(int $chatRoomId, int $userId)
+    /**
+     * @param int $chatRoomId
+     * @param int $userId
+     * @return Collection
+     * Get chat rooms by user great then $chatRoomId
+     */
+    public function getListByUserGtId(int $chatRoomId, int $userId): Collection
     {
         $chatRooms = DB::table('chat_room_user')
             ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
             ->join('users', 'chat_room_user.user_id', 'users.id')
             ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-            ->select('chat_rooms.id', 'chat_rooms.title','messages.id as message_id', 'messages.message AS last_message', 'messages.updated_at')
-            ->where('users.id', $userId)
+            ->select('chat_rooms.id','users.username AS title','messages.id AS message_id','messages.message AS last_message','messages.updated_at')
+            ->where('users.id','<>', $userId)
+            ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {
+                $query->select('chat_room_id')->from('chat_room_user')->where('user_id', $userId);
+            })
             ->where('chat_rooms.id', '>', $chatRoomId)
-            ->whereIn('messages.id', function ($query) {
-                $query->select(DB::raw('MAX(messages.id)'))->from('messages')->groupBy('messages.chat_room_id');
+            ->whereIn('messages.id', function (Builder $query) {
+                $query->selectRaw('MAX(messages.id)')->from('messages')->whereNull('deleted_at')->groupBy('messages.chat_room_id');
             })
             ->orderByDesc('messages.created_at')
             ->get();

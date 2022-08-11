@@ -36,9 +36,4 @@ class ChatRoom extends Model
         return $this->belongsToMany(User::class, 'chat_room_user');
     }
 
-    public function scopeGreatThen(Builder $query, int $userId)
-    {
-        return;
-    }
-
 }
