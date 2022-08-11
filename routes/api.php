@@ -12,7 +12,7 @@ Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 'l
 Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::group(['prefix' => 'user','as' => 'user.'], function () {
-        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/{id}/all', [UserController::class, 'index'])->name('index');
         Route::get('/{id}', [UserController::class, 'show'])->name('show');
         Route::get('/{id}/friends', [UserController::class, 'friends'])->name('friends');
         Route::get('/{id}/search/{username}', [UserController::class, 'searchUser'])->where('username','.*');

@@ -18,9 +18,9 @@ class UserController extends Controller
         $this->userRepository = $userRepository;
     }
 
-    public function index()
+    public function index($id)
     {
-        $users = $this->userRepository->getAll();
+        $users = $this->userRepository->getAll($id);
 
         return response()->json([
             'status' => true,

@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 final class EloquentUserQueries implements UserQueries
 {
-    public function getAll()
+    public function getAll($id)
     {
-        return User::select('id','username','avatar','active')->get();
+        return User::select('id','username')->where('id','<>', $id)->get();
     }
 
     public function getById(int $id)

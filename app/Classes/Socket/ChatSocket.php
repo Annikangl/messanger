@@ -43,8 +43,8 @@ class ChatSocket extends BaseSocket
     public function onMessage(ConnectionInterface $from, $msg)
     {
         $numRecv = count($this->clients) - 1;
-        echo sprintf('Connection %d sending message "%s" to %d other connection%s ' . "\n"
-            , $from->resourceId, $msg, $numRecv, $numRecv === 1 ? '' : 's ');
+//        echo sprintf('Connection %d sending message "%s" to %d other connection%s ' . "\n"
+//            , $from->resourceId, $msg, $numRecv, $numRecv === 1 ? '' : 's ');
 
         $data = json_decode($msg, true, 512, JSON_THROW_ON_ERROR);
 
@@ -70,7 +70,6 @@ class ChatSocket extends BaseSocket
                 $this->closeVoiceCall($data);
                 break;
             case "remove_message":
-                dump($data);
                 $this->removeMessage($from, $data);
                 break;
             default:
@@ -220,7 +219,6 @@ class ChatSocket extends BaseSocket
     {
         foreach ($this->clients as $client) {
             if ($client->resourceId == $receiver) {
-                dump('Send data to ' . $receiver);
                 $client->send(json_encode($data, JSON_THROW_ON_ERROR));
             }
         }
