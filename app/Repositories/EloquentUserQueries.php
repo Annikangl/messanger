@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 final class EloquentUserQueries implements UserQueries
 {
-    public function getAll($id)
+    public function getAll($id): Collection|array
     {
         return User::select('id','username')->where('id','<>', $id)->get();
     }

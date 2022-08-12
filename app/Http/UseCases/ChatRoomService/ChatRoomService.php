@@ -4,7 +4,7 @@
 namespace App\Http\UseCases\ChatRoomService;
 
 
-use App\Exceptions\MessageException;
+use App\Exceptions\ChatRoom\ChatRoomException;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Models\ChatRoom;
 use App\Models\User;
@@ -31,7 +31,7 @@ class ChatRoomService
                 $messageService = app(MessagesService::class);
 
                 if (!$messageService->create($message)) {
-                    throw new MessageException('Message not created in new chat');
+                    throw new ChatRoomException('Message not sent in the chat');
                 }
 
                 return $chatRoom->id;

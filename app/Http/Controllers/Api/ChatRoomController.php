@@ -38,7 +38,7 @@ class ChatRoomController extends Controller
      * @param int $userId
      * @return JsonResponse|object
      */
-    public function listByUserGtId(int $chatRoomId, int $userId)
+    public function listByUserGtId(int $chatRoomId, int $userId): JsonResponse
     {
         $chatRooms = $this->chatRoomRepository->getListByUserGtId($chatRoomId, $userId);
 
@@ -61,7 +61,7 @@ class ChatRoomController extends Controller
      * @param StoreChatroomRequest $request
      * @return JsonResponse|object
      */
-    public function store(StoreChatroomRequest $request)
+    public function store(StoreChatroomRequest $request): JsonResponse
     {
         try {
             $chatRoom = $this->chatRoomService->create(
@@ -69,7 +69,7 @@ class ChatRoomController extends Controller
                 $request['sender_id'],
                 $request['receiver_id']
             );
-        } catch (\DomainException $exception) {
+        } catch (\Exception $exception) {
             return response()->json(['status' => false, 'error' => $exception->getMessage()]);
         }
 
