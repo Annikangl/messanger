@@ -3,6 +3,7 @@
 /public/storage
 /storage/*.key
 /vendor
+/dump
 .env
 .env.production
 .env.backup
