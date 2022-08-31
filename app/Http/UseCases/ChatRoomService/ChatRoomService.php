@@ -3,7 +3,6 @@
 
 namespace App\Http\UseCases\ChatRoomService;
 
-
 use App\Exceptions\ChatRoom\ChatRoomException;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Models\ChatRoom;

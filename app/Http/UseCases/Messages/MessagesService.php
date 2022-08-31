@@ -17,8 +17,13 @@ class MessagesService
 {
     public function create(array $message)
     {
-        $chatRoom = $this->getChatRoom($message['chat_room_id']);
+        try {
+            $this->validate($message);
+        } catch (MessageException $exception) {
+            throw new MessageException($exception->getMessage());
+        }
 
+        $chatRoom = $this->getChatRoom($message['chat_room_id']);
 
         if (!empty($message['audio']) && !is_null($message['audio'])) {
             return $this->createAudioMessage($message, $chatRoom);
@@ -77,7 +82,7 @@ class MessagesService
         ]);
 
         if ($validator->fails()) {
-            throw new MessageException('Message not validated');
+            throw new MessageException('Message not validated ' . $validator->errors()->first());
         }
     }
 

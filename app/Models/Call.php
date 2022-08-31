@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $status;
  * @property string $duration;
  *
- * @method forUser(int $userId)
- * @method greatThen(int $id, int $userId)
+ * @method Builder forUser(int $userId)
+ * @method Builder greatThen(int $id, int $userId)
  */
 class Call extends Model
 {
@@ -75,13 +75,13 @@ class Call extends Model
         ]);
     }
 
-    public function scopeForUser(Builder $query, int $userId)
+    public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('sender_id', $userId)->orWhere('receiver_id', $userId)
             ->with(['caller:id,username']);
     }
 
-    public function scopeGreatThen(Builder $query, $id, $userId)
+    public function scopeGreatThen(Builder $query, $id, $userId): Builder
     {
         return $query->where(function ($query) use ($userId) {
             $query->where('sender_id', $userId)->orWhere('receiver_id', $userId);

@@ -43,8 +43,8 @@ class ChatSocket extends BaseSocket
     public function onMessage(ConnectionInterface $from, $msg)
     {
         $numRecv = count($this->clients) - 1;
-//        echo sprintf('Connection %d sending message "%s" to %d other connection%s ' . "\n"
-//            , $from->resourceId, $msg, $numRecv, $numRecv === 1 ? '' : 's ');
+        echo sprintf('Connection %d sending message "%s" to %d other connection%s ' . "\n"
+            , $from->resourceId, $msg, $numRecv, $numRecv === 1 ? '' : 's ');
 
         $data = json_decode($msg, true, 512, JSON_THROW_ON_ERROR);
 
@@ -94,7 +94,6 @@ class ChatSocket extends BaseSocket
         $message = null;
 
         try {
-            $this->messagesService->validate($data);
             $message = $this->messagesService->create($data);
         } catch (MessageException $exception) {
             $this->onError($from, $exception);
@@ -129,7 +128,6 @@ class ChatSocket extends BaseSocket
     {
         $call = $this->callService->create($data);
         $user = $this->getUser($data['sender_id']);
-
 
         $this->audioClients[$call->id] = [
             $data['sender_id'] => $this->userService->getSocketId($data['sender_id']),
@@ -215,7 +213,7 @@ class ChatSocket extends BaseSocket
         }
     }
 
-    private function sendTo(int $receiver, array $data): void
+    private function sendTo($receiver, array $data): void
     {
         foreach ($this->clients as $client) {
             if ($client->resourceId == $receiver) {

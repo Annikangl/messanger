@@ -27,4 +27,9 @@ class UserService
     {
         return Call::forUser($userId)->value('status');
     }
+
+    private function getUser($userId)
+    {
+        return User::query()->find($userId);
+    }
 }
