@@ -5,6 +5,9 @@ namespace App\Http\UseCases\Call;
 
 
 use App\Models\Call;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
 class AudioCallService
 {
@@ -25,16 +28,16 @@ class AudioCallService
         $call->close($status, $duration);
     }
 
-    public function accept($id, $status)
+    public function accept($id, $status): Model|Collection|Builder|array|null
     {
         $call = $this->getCall($id);
         $call->accept($status);
         return $call;
     }
 
-    private function getCall($id)
+    private function getCall($id): Call|Builder
     {
-        return Call::find($id);
+        return Call::query()->find($id);
     }
 
     public function checkExist(int $user_id)

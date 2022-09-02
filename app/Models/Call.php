@@ -52,7 +52,7 @@ class Call extends Model
         ]);
     }
 
-    public function accept($status)
+    public function accept(int $status): void
     {
         if ($this->isAccepted()) {
             throw new StatusException('Call already accepted');

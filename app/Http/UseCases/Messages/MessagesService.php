@@ -8,6 +8,9 @@ use App\Jobs\Message\SaveAudioJob;
 use App\Models\ChatRoom;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -100,14 +103,14 @@ class MessagesService
         return ChatRoom::find($id);
     }
 
-    private function getUser($id): User
+    private function getUser($id): Builder|array|Collection|Model
     {
-        return User::find($id);
+        return User::query()->find($id);
     }
 
-    private function getMessage($id)
+    private function getMessage($id): Model|Collection|Builder|array|null
     {
-        return Message::find($id);
+        return Message::query()->find($id);
     }
 
     private function getAudio($path): string

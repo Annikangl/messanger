@@ -4,9 +4,6 @@
 namespace App\Repositories\Interfaces;
 
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
-
 interface UserQueries
 {
     public function getAll($id);
@@ -15,5 +12,6 @@ interface UserQueries
     public function getUsernameById(int $id);
     public function getByEmail(string $email);
     public function chatroomByUser(int $id);
+    public function getSocketId(int $id);
     public function getSocketIdByChatRoom(int $sender_id, int $receiver_id);
 }

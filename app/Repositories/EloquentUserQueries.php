@@ -18,7 +18,13 @@ class EloquentUserQueries implements UserQueries
 
     public function getById(int $id): Model|Collection|array|User|null
     {
-        return User::find($id);
+        $key = __CLASS__ . 'user_' . $id;
+
+        $result = \Cache::tags('user')->remember($key, now()->addMinutes(1440), function () use ($id) {
+            return User::query()->find($id);
+        });
+
+        return $result;
     }
 
     public function getByUsername(string $username, int $userId): Collection
@@ -43,14 +49,26 @@ class EloquentUserQueries implements UserQueries
         return $result;
     }
 
-    public function getUsernameById(int $id): string
+    public function getUsernameById(int $id): ?string
     {
-        return User::query()->select('username')->where('id', $id)->value('username');
+        $key = __CLASS__ . 'user_' . $id . '_username';
+
+        $result = \Cache::tags('user')->remember($key, now()->addMinutes(1440), function () use ($id) {
+            User::query()->select('username')->where('id', $id)->value('username');
+        });
+
+        return $result;
     }
 
     public function chatroomByUser(int $id)
     {
-        return User::query()->find($id)->chatRooms->pluck('id');
+        $key = __CLASS__ . 'user_' . $id . '_chatRoom';
+
+        $result = \Cache::tags('user')->remember($key, now()->addMinutes(10), function () use ($id) {
+            return User::query()->find($id)->chatRooms->pluck('id');
+        });
+
+        return $result;
     }
 
     public function getByEmail(string $email): Model|User|null
@@ -60,6 +78,23 @@ class EloquentUserQueries implements UserQueries
 
     public function getSocketIdByChatRoom(int $senderId, int $receiverId): Collection|array
     {
-        return User::query()->select('socket_id')->whereIn('id', [$senderId, $receiverId])->get();
+        $key = __CLASS__ . 'users_' . $senderId . '_' . $receiverId;
+
+        $result = \Cache::tags('user')->remember($key, now()->addMinutes(2), function () use ($senderId, $receiverId) {
+            return User::query()->select('socket_id')->whereIn('id', [$senderId, $receiverId])->get();
+        });
+
+        return $result;
+    }
+
+    public function getSocketId(int $id): int
+    {
+        $key = __CLASS__ . 'user_' . $id . '_socketId';
+
+        $result = \Cache::tags('user')->remember($key, now()->addMinutes(5), function () use ($id) {
+            return User::query()->where('id', $id)->value('socket_id');
+        });
+
+        return $result;
     }
 }

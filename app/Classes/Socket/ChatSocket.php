@@ -129,12 +129,15 @@ class ChatSocket extends BaseSocket
 
     public function makeOutboundCall(array $data): void
     {
+        $receiverResponseData = [];
+        $senderResponseData = [];
+
         $call = $this->callService->create($data);
         $user = $this->userRepository->getById($data['sender_id']);
 
         $this->audioClients[$call->id] = [
-            $data['sender_id'] => $this->userService->getSocketId($data['sender_id']),
-            $data['receiver_id'] => $this->userService->getSocketId($data['receiver_id'])
+            $data['sender_id'] => $this->userRepository->getSocketId($data['sender_id']),
+            $data['receiver_id'] => $this->userRepository->getSocketId($data['receiver_id'])
         ];
 
         $receiver = $this->getReceiver($call->id, $data['sender_id']);
@@ -197,7 +200,7 @@ class ChatSocket extends BaseSocket
     {
         try {
             $this->messagesService->removeForAll($data['message_id']);
-            [$sender, $receiver] = [$this->userService->getSocketId($data['sender_id']), $this->userService->getSocketId($data['receiver_id'])];
+            [$sender, $receiver] = [$this->userRepository->getSocketId($data['sender_id']), $this->userRepository->getSocketId($data['receiver_id'])];
             $this->sendTo($sender, $data);
             $this->sendTo($receiver, $data);
         } catch (\DomainException $exception) {

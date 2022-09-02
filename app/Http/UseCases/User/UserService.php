@@ -3,9 +3,9 @@
 
 namespace App\Http\UseCases\User;
 
-
 use App\Models\Call;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserService
 {
@@ -18,17 +18,12 @@ class UserService
         ]);
     }
 
-    public function getSocketId($userId)
-    {
-        return User::where('id', $userId)->value('socket_id');
-    }
-
     public function getCallStatus(int $userId)
     {
         return Call::forUser($userId)->value('status');
     }
 
-    private function getUser($userId)
+    private function getUser($userId): User|Builder
     {
         return User::query()->find($userId);
     }
