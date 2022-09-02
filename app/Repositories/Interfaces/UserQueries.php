@@ -15,4 +15,5 @@ interface UserQueries
     public function getUsernameById(int $id);
     public function getByEmail(string $email);
     public function chatroomByUser(int $id);
+    public function getSocketIdByChatRoom(int $sender_id, int $receiver_id);
 }

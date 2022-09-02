@@ -8,29 +8,32 @@ use App\Exceptions\MessageException;
 use App\Http\UseCases\Call\AudioCallService;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Http\UseCases\User\UserService;
-use App\Models\User;
+use App\Repositories\EloquentUserQueries;
 use Exception;
 use http\Exception\RuntimeException;
-use Illuminate\Support\Facades\DB;
 use Ratchet\ConnectionInterface;
 use SplObjectStorage;
 
 class ChatSocket extends BaseSocket
 {
     protected SplObjectStorage $clients;
+    protected array $audioClients;
+
     private UserService $userService;
     private AudioCallService $callService;
     private MessagesService $messagesService;
-    protected array $audioClients;
+    private EloquentUserQueries $userRepository;
+
 
     private static array $errorCallStatuses = [400, 401, 402, 403];
 
-    public function __construct(UserService $userService, AudioCallService $callService, MessagesService $messagesService)
+    public function __construct(UserService $userService, AudioCallService $callService, MessagesService $messagesService, EloquentUserQueries $userRepository)
     {
         $this->clients = new SplObjectStorage();
         $this->userService = $userService;
         $this->callService = $callService;
         $this->messagesService = $messagesService;
+        $this->userRepository = $userRepository;
         $this->audioClients = [];
     }
 
@@ -99,7 +102,7 @@ class ChatSocket extends BaseSocket
             $this->onError($from, $exception);
         }
 
-        $receiverIds = $this->getSocketIdByChatRoom($data['sender_id'], $data['receiver_id']);
+        $receiverIds = $this->userRepository->getSocketIdByChatRoom($data['sender_id'], $data['receiver_id']);
 
         $responseData = [
             "type" => $data['type'],
@@ -127,7 +130,7 @@ class ChatSocket extends BaseSocket
     public function makeOutboundCall(array $data): void
     {
         $call = $this->callService->create($data);
-        $user = $this->getUser($data['sender_id']);
+        $user = $this->userRepository->getById($data['sender_id']);
 
         $this->audioClients[$call->id] = [
             $data['sender_id'] => $this->userService->getSocketId($data['sender_id']),
@@ -229,19 +232,6 @@ class ChatSocket extends BaseSocket
         }, ARRAY_FILTER_USE_KEY);
 
         return reset($receiver);
-    }
-
-    private function getSocketIdByChatRoom(int $senderId, int $receiverId)
-    {
-        return Db::table('users')
-            ->select('socket_id')
-            ->whereIn('id', [$senderId, $receiverId])
-            ->get();
-    }
-
-    public function getUser($id)
-    {
-        return User::find($id);
     }
 
 }

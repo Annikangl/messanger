@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Interfaces\UserQueries;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use App\Models\Call;
 
@@ -36,7 +37,7 @@ class CallController extends Controller
             ->setStatusCode(200);
     }
 
-    private function mapCalls($calls, int $userId)
+    private function mapCalls(Collection $calls, int $userId): Collection|\Illuminate\Support\Collection
     {
         return $calls->map(function ($call) use ($userId) {
             /** @var Call $call */

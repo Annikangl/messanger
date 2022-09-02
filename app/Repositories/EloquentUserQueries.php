@@ -6,6 +6,7 @@ namespace App\Repositories;
 use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class EloquentUserQueries implements UserQueries
@@ -15,7 +16,7 @@ class EloquentUserQueries implements UserQueries
         return User::select('id','username')->where('id','<>', $id)->get();
     }
 
-    public function getById(int $id)
+    public function getById(int $id): Model|Collection|array|User|null
     {
         return User::find($id);
     }
@@ -44,22 +45,21 @@ class EloquentUserQueries implements UserQueries
 
     public function getUsernameById(int $id): string
     {
-        return User::find($id)->username;
+        return User::query()->select('username')->where('id', $id)->value('username');
     }
 
     public function chatroomByUser(int $id)
     {
-        $result = User::query()->find($id)->chatRooms->pluck('id');
-//        $result = DB::table('chat_room_user')
-//                            ->select('chat_room_id')
-//                            ->where('user_id', $id)
-//                            ->get();
-
-        return $result;
+        return User::query()->find($id)->chatRooms->pluck('id');
     }
 
-    public function getByEmail(string $email)
+    public function getByEmail(string $email): Model|User|null
     {
-        return User::where('email', $email)->first();
+        return User::query()->where('email', $email)->first();
+    }
+
+    public function getSocketIdByChatRoom(int $senderId, int $receiverId): Collection|array
+    {
+        return User::query()->select('socket_id')->whereIn('id', [$senderId, $receiverId])->get();
     }
 }
