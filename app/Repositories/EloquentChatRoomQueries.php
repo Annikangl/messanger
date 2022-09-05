@@ -79,9 +79,9 @@ class EloquentChatRoomQueries implements ChatRoomQueries
         return $chatRooms;
     }
 
-    public function getUser(int $id)
+    public function getUser(int $id): User|\Illuminate\Database\Eloquent\Builder
     {
-        return User::find($id);
+        return User::query()->find($id);
     }
 
     public function getTitleByUserId(int $userId, int $chatRoomId)

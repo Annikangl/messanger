@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class EloquentUserQueries implements UserQueries
 {
@@ -20,7 +19,7 @@ class EloquentUserQueries implements UserQueries
     {
         $key = __CLASS__ . 'user_' . $id;
 
-        $result = \Cache::tags('user')->remember($key, now()->addMinutes(1440), function () use ($id) {
+        $result = \Cache::tags('user')->remember($key, 60*60*24, function () use ($id) {
             return User::query()->find($id);
         });
 
@@ -37,24 +36,12 @@ class EloquentUserQueries implements UserQueries
         return $result;
     }
 
-    public function getUserFriends($userId): \Illuminate\Support\Collection
-    {
-        $result = DB::table('users_friends')
-                        ->join('users', 'users_friends.friend_id', 'users.id')
-                        ->select('users_friends.friend_id as id','users.username', 'users.email',
-                            'users.avatar', 'users.last_login')
-                        ->where('users_friends.user_id', $userId)
-                        ->get();
-
-        return $result;
-    }
-
     public function getUsernameById(int $id): ?string
     {
         $key = __CLASS__ . 'user_' . $id . '_username';
 
-        $result = \Cache::tags('user')->remember($key, now()->addMinutes(1440), function () use ($id) {
-            User::query()->select('username')->where('id', $id)->value('username');
+        $result = \Cache::tags('user')->remember($key, 60*60*24, function () use ($id) {
+            return User::query()->select('username')->where('id', $id)->value('username');
         });
 
         return $result;
@@ -64,7 +51,7 @@ class EloquentUserQueries implements UserQueries
     {
         $key = __CLASS__ . 'user_' . $id . '_chatRoom';
 
-        $result = \Cache::tags('user')->remember($key, now()->addMinutes(10), function () use ($id) {
+        $result = \Cache::tags('user')->remember($key, 60*10, function () use ($id) {
             return User::query()->find($id)->chatRooms->pluck('id');
         });
 
@@ -80,7 +67,7 @@ class EloquentUserQueries implements UserQueries
     {
         $key = __CLASS__ . 'users_' . $senderId . '_' . $receiverId;
 
-        $result = \Cache::tags('user')->remember($key, now()->addMinutes(2), function () use ($senderId, $receiverId) {
+        $result = \Cache::tags('user')->remember($key, 60*2, function () use ($senderId, $receiverId) {
             return User::query()->select('socket_id')->whereIn('id', [$senderId, $receiverId])->get();
         });
 
@@ -91,7 +78,7 @@ class EloquentUserQueries implements UserQueries
     {
         $key = __CLASS__ . 'user_' . $id . '_socketId';
 
-        $result = \Cache::tags('user')->remember($key, now()->addMinutes(5), function () use ($id) {
+        $result = \Cache::tags('user')->remember($key, 60^5, function () use ($id) {
             return User::query()->where('id', $id)->value('socket_id');
         });
 

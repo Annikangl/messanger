@@ -28,7 +28,7 @@ class AudioCallService
         $call->close($status, $duration);
     }
 
-    public function accept($id, $status): Model|Collection|Builder|array|null
+    public function accept($id, $status): Call|Builder
     {
         $call = $this->getCall($id);
         $call->accept($status);
@@ -40,20 +40,8 @@ class AudioCallService
         return Call::query()->find($id);
     }
 
-    public function checkExist(int $user_id)
+    public function checkExist(int $user_id): Call
     {
-//        $res_1 = Call::where('status', Call::STATUS_ACCEPTED)->where(function ($query) use ($user_id) {
-//            $query->where('sender_id', $user_id)->orWhere('receiver_id', $user_id);
-//        })->first();
-//
-//        $res_2 = Call::query()->where(function ($query) use ($user_id) {
-//            $query->where('sender_id', $user_id)->orWhere('receiver_id', $user_id);
-//        })->where(function ($query) {
-//            $query->where('status', 200);
-//        })->first();
-//
-//        dump($res_1->toSql(), $res_2->toSql());
-
         return Call::where('status', Call::STATUS_ACCEPTED)->where(function ($query) use ($user_id) {
             $query->where('sender_id', $user_id)->orWhere('receiver_id', $user_id);
         })->first();

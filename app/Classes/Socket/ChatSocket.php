@@ -129,9 +129,6 @@ class ChatSocket extends BaseSocket
 
     public function makeOutboundCall(array $data): void
     {
-        $receiverResponseData = [];
-        $senderResponseData = [];
-
         $call = $this->callService->create($data);
         $user = $this->userRepository->getById($data['sender_id']);
 

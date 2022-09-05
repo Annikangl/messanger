@@ -58,7 +58,7 @@ class  User extends Authenticatable
         return $this->hasMany(Message::class,'sender_id');
     }
 
-    public function calls()
+    public function calls(): HasMany
     {
         return $this->hasMany(Call::class, 'sender_id', 'id');
     }
