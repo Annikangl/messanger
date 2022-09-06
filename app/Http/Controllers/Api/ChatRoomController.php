@@ -21,12 +21,12 @@ class ChatRoomController extends Controller
 
     /**
      * Get chat rooms by user
-     * @param int $id
+     * @param int $userId
      * @return JsonResponse
      */
-    public function chatRoomsByUser(int $id): JsonResponse
+    public function listByUser(int $userId): JsonResponse
     {
-        $chatRooms = $this->chatRoomRepository->getListByUser($id);
+        $chatRooms = $this->chatRoomRepository->getListByUser($userId);
 
         return response()->json(["status" => true, "chat_rooms" => $chatRooms])
             ->setStatusCode(200);
@@ -36,7 +36,7 @@ class ChatRoomController extends Controller
      * Get chat rooms by user great then $chatRoomId
      * @param int $chatRoomId
      * @param int $userId
-     * @return JsonResponse|object
+     * @return JsonResponse
      */
     public function listByUserGtId(int $chatRoomId, int $userId): JsonResponse
     {
@@ -46,20 +46,10 @@ class ChatRoomController extends Controller
             ->setStatusCode(200);
     }
 
-//    public function show(int $chatRoomId, int $userId)
-//    {
-//        $chatRoom = $this->chatRoomQueries->getByChatId($chatRoomId, $userId);
-//
-//        return response()->json([
-//            "status" => true,
-//            "chat_room" => $chatRoom
-//        ]);
-//    }
-
     /**
      * Create new chat room or return exist
      * @param StoreChatroomRequest $request
-     * @return JsonResponse|object
+     * @return JsonResponse
      */
     public function store(StoreChatroomRequest $request): JsonResponse
     {

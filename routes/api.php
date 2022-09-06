@@ -21,8 +21,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::group(['prefix' => 'chatroom', 'as' => 'chatroom.'], function () {
-//        Route::get('/{chatRoomId}/user/{userId}', [ChatRoomController::class, 'show'])->name('show');
-        Route::get('/user/{id}', [ChatRoomController::class, 'chatRoomsByUser'])->name('listByUser');
+        Route::get('/user/{id}', [ChatRoomController::class, 'listByUser'])->name('listByUser');
         Route::get('/{chatRoomId}/user/{userId}/new', [ChatRoomController::class, 'listByUserGtId'])->name('byUserGtId');
         Route::post('/', [ChatRoomController::class, 'store'])->name('store');
         Route::delete('/{chatRoomId}', [ChatRoomController::class, 'destroy'])->name('remove');

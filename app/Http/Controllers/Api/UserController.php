@@ -30,7 +30,7 @@ class UserController extends Controller
 //        return new UserCollection($users);
     }
 
-    public function show(int $id): UserResource
+    public function show(int $id): \Illuminate\Http\JsonResponse
     {
         $user = $this->userRepository->getById($id);
 
@@ -38,10 +38,11 @@ class UserController extends Controller
             throw new NotFoundException('User not found');
         }
 
-        return new UserResource($user);
+        return response()->json(['status ' => true, 'user' => $user])
+            ->setStatusCode(200);
     }
 
-    public function searchUser(int $userId, string $username): UserResource
+    public function searchUser(int $userId, string $username): \Illuminate\Http\JsonResponse
     {
         $user = $this->userRepository->getByUsername($username, $userId);
 
@@ -49,7 +50,7 @@ class UserController extends Controller
             throw new NotFoundException('User not found by username ' . $username);
         }
 
-        return new UserResource($user);
-
+        return response()->json(['status ' => true, 'user' => $user])
+            ->setStatusCode(200);
     }
 }

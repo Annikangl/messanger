@@ -14,39 +14,27 @@ class EloquentChatRoomQueries implements ChatRoomQueries
 {
     public function getListByUser(int $userId): Collection
     {
-        $result = DB::table('chat_room_user')
-            ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
-            ->join('users', 'chat_room_user.user_id', 'users.id')
-            ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-            ->select('chat_rooms.id','users.username AS title','messages.id AS message_id','messages.message AS last_message','messages.updated_at')
-            ->where('users.id','<>', $userId)
-            ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {
-                $query->select('chat_room_id')->from('chat_room_user')->where('user_id', $userId);
-            })
-            ->whereIn('messages.id', function (Builder $query) {
-                $query->selectRaw('MAX(messages.id)')->from('messages')->whereNull('deleted_at')->groupBy('messages.chat_room_id');
-            })
-            ->orderByDesc('messages.created_at')
-            ->get();
+        $key = 'chatrooms_bu_user_' . $userId;
 
-        return $result;
-    }
-
-    public function getByChatId(int $chatRoomId, int $userId)
-    {
-        $chatRoom = ChatRoom::findOrFail($chatRoomId);
-
-        $message = $chatRoom->messages()->select('message AS last_message')->whereIn('messages.id', function (Builder $query) {
-            $query->select(DB::raw('MAX(messages.id)'))->from('messages')->groupBy('messages.chat_room_id');
-        })->get();
-
-        $result = $message->map(function ($message) use ($chatRoom, $userId) {
-            return [
-                'id' => $chatRoom->id,
-                'title' => $this->getTitleByUserId($userId, $chatRoom->id),
-                'last_message' => $message->last_message,
-                'updated_at' => $chatRoom->updated_at,
-            ];
+        $result = \Cache::tags('chatrooms')->remember($key, 60*5, function () use ($userId) {
+            return DB::table('chat_room_user')
+                ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
+                ->join('users', 'chat_room_user.user_id', 'users.id')
+                ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
+                ->select('chat_rooms.id','users.username AS title','messages.id AS message_id',
+                    'messages.message AS last_message','messages.updated_at')
+                ->where('users.id','<>', $userId)
+                ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {
+                    $query->select('chat_room_id')->from('chat_room_user')
+                        ->where('user_id', $userId);
+                })
+                ->whereIn('messages.id', function (Builder $query) {
+                    $query->selectRaw('MAX(messages.id)')->from('messages')
+                        ->whereNull('deleted_at')
+                        ->groupBy('messages.chat_room_id');
+                })
+                ->orderByDesc('messages.created_at')
+                ->get();
         });
 
         return $result;
@@ -60,23 +48,32 @@ class EloquentChatRoomQueries implements ChatRoomQueries
      */
     public function getListByUserGtId(int $chatRoomId, int $userId): Collection
     {
-        $chatRooms = DB::table('chat_room_user')
-            ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
-            ->join('users', 'chat_room_user.user_id', 'users.id')
-            ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-            ->select('chat_rooms.id','users.username AS title','messages.id AS message_id','messages.message AS last_message','messages.updated_at')
-            ->where('users.id','<>', $userId)
-            ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {
-                $query->select('chat_room_id')->from('chat_room_user')->where('user_id', $userId);
-            })
-            ->where('chat_rooms.id', '>', $chatRoomId)
-            ->whereIn('messages.id', function (Builder $query) {
-                $query->selectRaw('MAX(messages.id)')->from('messages')->whereNull('deleted_at')->groupBy('messages.chat_room_id');
-            })
-            ->orderByDesc('messages.created_at')
-            ->get();
+        $key = 'chatrooms_bu_user_' . $userId . '_gt';
 
-        return $chatRooms;
+        $result = \Cache::tags('chatrooms')->remember($key, 60*5, function () use ($chatRoomId, $userId) {
+           return DB::table('chat_room_user')
+               ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
+               ->join('users', 'chat_room_user.user_id', 'users.id')
+               ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
+               ->select('chat_rooms.id','users.username AS title','messages.id AS message_id',
+                   'messages.message AS last_message','messages.updated_at')
+               ->where('users.id','<>', $userId)
+               ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {
+                   $query->select('chat_room_id')->from('chat_room_user')
+                       ->where('user_id', $userId);
+               })
+               ->where('chat_rooms.id', '>', $chatRoomId)
+               ->whereIn('messages.id', function (Builder $query) {
+                   $query->selectRaw('MAX(messages.id)')
+                       ->from('messages')
+                       ->whereNull('deleted_at')
+                       ->groupBy('messages.chat_room_id');
+               })
+               ->orderByDesc('messages.created_at')
+               ->get();
+        });
+
+        return $result;
     }
 
     public function getUser(int $id): User|\Illuminate\Database\Eloquent\Builder
@@ -99,7 +96,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
     {
         $result = ChatRoom::find($chatRoomId)
             ->users()
-            ->where('user_id','<>',[$userId])
+            ->where('user_id','<>', $userId)
             ->value('user_id');
 
         return $result;
