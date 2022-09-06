@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserCollection;
+use App\Http\Resources\UserResource;
 use App\Repositories\Interfaces\UserQueries;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserController extends Controller
 {
@@ -16,14 +18,19 @@ class UserController extends Controller
         $this->userRepository = $userRepository;
     }
 
-    public function index($id): UserCollection
+    public function index($id): \Illuminate\Http\JsonResponse
     {
         $users = $this->userRepository->getAll($id);
 
-        return new UserCollection($users);
+        return response()->json([
+            'status' => true,
+            'users' => $users
+        ]);
+
+//        return new UserCollection($users);
     }
 
-    public function show(int $id)
+    public function show(int $id): UserResource
     {
         $user = $this->userRepository->getById($id);
 
@@ -31,11 +38,10 @@ class UserController extends Controller
             throw new NotFoundException('User not found');
         }
 
-        return response()->json(["status" => true, "user" => $user])
-            ->setStatusCode(200);
+        return new UserResource($user);
     }
 
-    public function searchUser(int $userId, string $username): \Illuminate\Http\JsonResponse
+    public function searchUser(int $userId, string $username): UserResource
     {
         $user = $this->userRepository->getByUsername($username, $userId);
 
@@ -43,8 +49,7 @@ class UserController extends Controller
             throw new NotFoundException('User not found by username ' . $username);
         }
 
-        return response()->json(["status" => 200, "user" => $user])
-            ->setStatusCode(200);
+        return new UserResource($user);
 
     }
 }

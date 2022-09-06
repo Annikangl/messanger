@@ -15,10 +15,10 @@ class UserCollection extends ResourceCollection
     public function toArray($request)
     {
         return [
-            'status' => true,
             'users' => $this->collection,
         ];
     }
+
 
     public function withResponse($request, $response)
     {

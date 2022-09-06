@@ -13,7 +13,7 @@ use Illuminate\Pagination\Paginator;
 class EloquentMessageQueries implements MessageQueries
 {
 
-    public function getWithPaginate(int $chatRoomId, $perPage)
+    public function getWithPaginate(int $chatRoomId, $perPage): \Illuminate\Contracts\Pagination\Paginator
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
@@ -24,7 +24,7 @@ class EloquentMessageQueries implements MessageQueries
         return $result;
     }
 
-    public function getTrashedMEssages($chatRoomId)
+    public function getTrashedMessages($chatRoomId)
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
@@ -48,24 +48,24 @@ class EloquentMessageQueries implements MessageQueries
         return $result;
     }
 
-    public function getNewMessage(int $chatRoomId, int $messageId)
+    public function getNewMessage(int $chatRoomId, int $messageId): Collection
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
             ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
-            ->where('messages.id', '>', [$messageId])
+            ->where('messages.id', '>', $messageId)
             ->latest('messages.created_at')
             ->get();
 
         return $result;
     }
 
-    public function getOldMessage(int $chatRoomId, int $messageId)
+    public function getOldMessage(int $chatRoomId, int $messageId): Collection
     {
         $result = ChatRoom::findOrFail($chatRoomId)
             ->messages()
             ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
-            ->where('messages.id', '<', [$messageId])
+            ->where('messages.id', '<', $messageId)
             ->latest('messages.created_at')
             ->limit(15)
             ->get();

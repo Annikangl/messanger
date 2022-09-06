@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Repositories\Interfaces\CallQueries;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -11,15 +12,17 @@ use App\Models\Call;
 class CallController extends Controller
 {
     private UserQueries $userRepository;
+    private CallQueries $callRepository;
 
-    public function __construct(UserQueries $userRepository)
+    public function __construct(UserQueries $userRepository, CallQueries $callRepository)
     {
         $this->userRepository = $userRepository;
+        $this->callRepository = $callRepository;
     }
 
     public function list(int $userId): JsonResponse
     {
-        $calls =  Call::forUser($userId)->latest()->get();
+        $calls =  $this->callRepository->getByUser($userId);
 
         $calls = $this->mapCalls($calls, $userId);
 
@@ -29,7 +32,7 @@ class CallController extends Controller
 
     public function listGtId($id, $userId): JsonResponse
     {
-        $calls = Call::greatThen($id, $userId)->get();
+        $calls = $this->callRepository->getByUserGreatThen($userId, $id);
 
         $calls = $this->mapCalls($calls, $userId);
 

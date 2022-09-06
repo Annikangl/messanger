@@ -12,10 +12,16 @@ class EloquentUserQueries implements UserQueries
 {
     public function getAll($id): Collection|array
     {
-        return User::select('id','username')->where('id','<>', $id)->get();
+        $key = __CLASS__ . '_users';
+
+        $result = \Cache::tags('user')->remember($key, 60*60*24, function () use ($id) {
+            return User::select('id','username')->where('id','<>', $id)->get();
+        });
+
+        return $result;
     }
 
-    public function getById(int $id): Model|Collection|array|User|null
+    public function getById(int $id): User
     {
         $key = __CLASS__ . 'user_' . $id;
 

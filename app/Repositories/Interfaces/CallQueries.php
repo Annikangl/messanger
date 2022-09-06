@@ -6,7 +6,6 @@ namespace App\Repositories\Interfaces;
 
 interface CallQueries
 {
-    public function getAll();
-    public function getById(int $id);
-    public function getByUser($id);
+    public function getByUser(int $id);
+    public function getByUserGreatThen(int $userId, int $callId);
 }

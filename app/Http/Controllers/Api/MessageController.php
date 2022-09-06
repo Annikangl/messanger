@@ -59,7 +59,7 @@ class MessageController extends Controller
 
     public function trashedList(int $chatRoomId, int $userId)
     {
-        $dialog = $this->messageQueries->getTrashedMEssages($chatRoomId);
+        $dialog = $this->messageQueries->getTrashedMessages($chatRoomId);
         $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
 
         return response()->json([
