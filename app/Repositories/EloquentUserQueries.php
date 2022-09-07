@@ -88,6 +88,7 @@ class EloquentUserQueries implements UserQueries
             return User::query()->where('id', $id)->value('socket_id');
         });
 
+//        $result =  User::query()->where('id', $id)->value('socket_id');
         return $result;
     }
 }

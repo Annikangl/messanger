@@ -9,8 +9,6 @@ use App\Models\ChatRoom;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -36,6 +34,7 @@ class MessagesService
             /** @var Message $message */
             $message = Message::make([
                 'sender_id' => $message['sender_id'],
+                'receiver_id' => $message['receiver_id'],
                 'message' => $message['message'],
                 'audio' => null,
             ]);
@@ -44,6 +43,7 @@ class MessagesService
             $message->save();
 
             $message->username = $this->getUser($message['sender_id'])->username;
+
             return $message;
         });
     }
@@ -58,6 +58,7 @@ class MessagesService
                 /** @var Message $audioMessage */
                 $audioMessage = Message::make([
                     'sender_id' => $message['sender_id'],
+                    'receiver_id' => $message['receiver_id'],
                     'message' => null,
                     'audio' => $audioMessagePath,
                 ]);
@@ -78,8 +79,9 @@ class MessagesService
     public function validate($message)
     {
         $validator = Validator::make($message, [
-            'sender_id' => 'required|integer',
-            'chat_room_id' => 'required|integer',
+            'sender_id' => 'required|integer|exists:users,id',
+            'receiver_id' => 'required|integer|exists:users,id',
+            'chat_room_id' => 'required|integer|exists:chat_rooms,id',
             'message' => Rule::requiredIf(empty($message['audio']) || is_null($message['audio'])),
             'audio' => Rule::requiredIf(empty($message['message']) || is_null($message['message'])),
         ]);
@@ -103,12 +105,12 @@ class MessagesService
         return ChatRoom::find($id);
     }
 
-    private function getUser($id): Builder|array|Collection|Model
+    private function getUser($id): Builder|User
     {
         return User::query()->find($id);
     }
 
-    private function getMessage($id): Model|Collection|Builder|array|null
+    private function getMessage($id): Builder|Message
     {
         return Message::query()->find($id);
     }

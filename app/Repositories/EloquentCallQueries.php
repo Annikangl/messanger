@@ -22,7 +22,7 @@ class EloquentCallQueries implements CallQueries
 
     public function getByUserGreatThen(int $userId, int $callId)
     {
-        $key = __CLASS__ . '_user_' . $userId . '_calls_GT';
+        $key = __CLASS__ . '_user_' . $userId . '_calls_gt';
 
         $result = \Cache::tags('calls')->remember($key, 60*10, function () use ($userId, $callId) {
             return Call::greatThen($callId, $userId)->get();

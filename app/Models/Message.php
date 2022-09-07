@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
  * @mixin Builder
  *
  * @property int $sender_id
+ * @property int $receiver_id
  * @property ?string $message
  * @property ?string $audio
  * @property int $chat_room_id
@@ -28,7 +29,7 @@ class Message extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['sender_id', 'message', 'audio', 'chat_room_id'];
+    protected $fillable = ['sender_id', 'receiver_id', 'message', 'audio', 'chat_room_id'];
 
     public function chatRoom(): BelongsTo
     {

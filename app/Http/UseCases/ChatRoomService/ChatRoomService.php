@@ -21,6 +21,7 @@ class ChatRoomService
 
                 $message = [
                     'sender_id' => $sender_id,
+                    'receiver_id' => $receiver_id,
                     'message' => "Чат создан!",
                     'audio' => null,
                     'chat_room_id' => $chatRoom->id

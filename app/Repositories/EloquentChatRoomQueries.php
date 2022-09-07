@@ -14,7 +14,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
 {
     public function getListByUser(int $userId): Collection
     {
-        $key = 'chatrooms_bu_user_' . $userId;
+        $key = 'chatrooms_by_user_' . $userId;
 
         $result = \Cache::tags('chatrooms')->remember($key, 60*5, function () use ($userId) {
             return DB::table('chat_room_user')
@@ -48,7 +48,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
      */
     public function getListByUserGtId(int $chatRoomId, int $userId): Collection
     {
-        $key = 'chatrooms_bu_user_' . $userId . '_gt';
+        $key = 'chatrooms_by_user_' . $userId . '_gt';
 
         $result = \Cache::tags('chatrooms')->remember($key, 60*5, function () use ($chatRoomId, $userId) {
            return DB::table('chat_room_user')

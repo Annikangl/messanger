@@ -40,7 +40,7 @@ class AudioCallService
         return Call::query()->find($id);
     }
 
-    public function checkExist(int $user_id): Call
+    public function checkExist(int $user_id): ?Call
     {
         return Call::where('status', Call::STATUS_ACCEPTED)->where(function ($query) use ($user_id) {
             $query->where('sender_id', $user_id)->orWhere('receiver_id', $user_id);

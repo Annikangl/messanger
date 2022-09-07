@@ -102,7 +102,9 @@ class ChatSocket extends BaseSocket
             $this->onError($from, $exception);
         }
 
-        $receiverIds = $this->userRepository->getSocketIdByChatRoom($data['sender_id'], $data['receiver_id']);
+//        $receiverIds = $this->userRepository->getSocketIdByChatRoom($data['sender_id'], $data['receiver_id']);
+        $sender = $this->userRepository->getSocketId($message->sender_id);
+        $receiver = $this->userRepository->getSocketId($message->receiver_id);
 
         $responseData = [
             "type" => $data['type'],
@@ -115,7 +117,9 @@ class ChatSocket extends BaseSocket
             "created_at" => $message->created_at
         ];
 
-        $this->broadcast($receiverIds, $responseData);
+        $this->sendTo($sender, $responseData);
+        $this->sendTo($receiver, $responseData);
+//        $this->broadcast($receiverIds, $responseData);
     }
 
     public function initialCall($data)
