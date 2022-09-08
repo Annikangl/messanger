@@ -14,10 +14,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
 {
     public function getListByUser(int $userId): Collection
     {
-        $key = 'chatrooms_by_user_' . $userId;
-
-        $result = \Cache::tags('chatrooms')->remember($key, 60*5, function () use ($userId) {
-            return DB::table('chat_room_user')
+        $result = DB::table('chat_room_user')
                 ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
                 ->join('users', 'chat_room_user.user_id', 'users.id')
                 ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
@@ -35,7 +32,6 @@ class EloquentChatRoomQueries implements ChatRoomQueries
                 })
                 ->orderByDesc('messages.created_at')
                 ->get();
-        });
 
         return $result;
     }
@@ -48,10 +44,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
      */
     public function getListByUserGtId(int $chatRoomId, int $userId): Collection
     {
-        $key = 'chatrooms_by_user_' . $userId . '_gt';
-
-        $result = \Cache::tags('chatrooms')->remember($key, 60*5, function () use ($chatRoomId, $userId) {
-           return DB::table('chat_room_user')
+        $result = DB::table('chat_room_user')
                ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
                ->join('users', 'chat_room_user.user_id', 'users.id')
                ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
@@ -71,7 +64,6 @@ class EloquentChatRoomQueries implements ChatRoomQueries
                })
                ->orderByDesc('messages.created_at')
                ->get();
-        });
 
         return $result;
     }
