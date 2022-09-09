@@ -24,17 +24,16 @@ class ChatSocket extends BaseSocket
     private MessagesService $messagesService;
     private EloquentUserQueries $userRepository;
 
-
     private static array $errorCallStatuses = [400, 401, 402, 403];
 
     public function __construct(UserService $userService, AudioCallService $callService, MessagesService $messagesService, EloquentUserQueries $userRepository)
     {
         $this->clients = new SplObjectStorage();
+        $this->audioClients = [];
         $this->userService = $userService;
         $this->callService = $callService;
         $this->messagesService = $messagesService;
         $this->userRepository = $userRepository;
-        $this->audioClients = [];
     }
 
     public function onOpen(ConnectionInterface $conn)
@@ -54,13 +53,19 @@ class ChatSocket extends BaseSocket
         switch ($data['type']) {
             case "subscribe":
                 $this->userService->setSocketId($data['sender_id'], $from->resourceId);
+                $this->broadcastOnlineUsers($from, $data['sender_id']);
+                break;
+            case "ping":
+                $this->setUsersOffline();
+                break;
+            case "pong":
+                $this->setUserOnline($data);
                 break;
             case "message":
                 $this->sendMessage($data, $from);
                 break;
             case "init_call":
                 $data['status'] = (int)$data['status'];
-                dump($data);
                 $this->initialCall($data);
                 break;
             case "call":
@@ -69,7 +74,6 @@ class ChatSocket extends BaseSocket
                 break;
             case "close_call":
                 $data['status'] = (int)$data['status'];
-                dump($data);
                 $this->closeVoiceCall($data);
                 break;
             case "remove_message":
@@ -90,6 +94,45 @@ class ChatSocket extends BaseSocket
     {
         echo "An error has occurred: {$e->getMessage()}\n";
         $conn->close();
+    }
+
+    public function setUserOnline(array $data): void
+    {
+        $this->userService->setOnline($data['sender_id']);
+        sleep(2);
+        $offlineUsers = $this->userRepository->getOfflineUsers();
+
+        $this->broadcastAll([
+            'type' => 'offline_users',
+            'offline_users' => $offlineUsers
+        ]);
+    }
+
+    private function setUsersOffline(): void
+    {
+        $user = $this->userService->setOffline();
+        $responseData = ['type' => 'ping'];
+        $this->broadcastAll($responseData);
+    }
+
+    private function broadcastOnlineUsers(ConnectionInterface $from, int $userId)
+    {
+        $users = $this->userRepository->getOnlineUsers();
+        $user = $this->userRepository->getById($userId);
+
+        $this->sendTo($from->resourceId, [
+            'type' => 'online_users',
+            'online_users' => $users
+        ]);
+
+        $broadcast_data = [
+            'type' => 'active_user',
+            'id' => $user->id,
+            'username' => $user->username,
+            'active' => $user->active
+        ];
+
+        $this->broadcastAll($broadcast_data);
     }
 
     public function sendMessage($data, $from): void
@@ -216,6 +259,13 @@ class ChatSocket extends BaseSocket
                     $client->send(json_encode($data, JSON_THROW_ON_ERROR));
                 }
             }
+        }
+    }
+
+    private function broadcastAll($data): void
+    {
+        foreach ($this->clients as $client) {
+            $client->send(json_encode($data, JSON_THROW_ON_ERROR));
         }
     }
 

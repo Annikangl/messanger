@@ -26,6 +26,9 @@ class  User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    const STATUS_ONLINE = 'В сети';
+    const STATUS_OFFLINE = 'Не в сети';
+
     protected $fillable = [
         'socket_id',
         'username',
@@ -43,6 +46,20 @@ class  User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function setOnline(): static
+    {
+        $this->active = self::STATUS_ONLINE;
+        $this->save();
+        return $this;
+    }
+
+    public function setOffline(): static
+    {
+        $this->active = self::STATUS_ONLINE;
+        $this->save();
+        return $this;
+    }
 
     /**
      * Chat rooms by user

@@ -5,6 +5,7 @@ namespace App\Repositories;
 
 use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -89,6 +90,22 @@ class EloquentUserQueries implements UserQueries
         });
 
 //        $result =  User::query()->where('id', $id)->value('socket_id');
+        return $result;
+    }
+
+    public function getOfflineUsers(): User|Collection
+    {
+        $result = User::query()->select('id','username','active')
+            ->where('active', User::STATUS_OFFLINE)->get();
+
+        return $result;
+    }
+
+    public function getOnlineUsers(): User|Collection
+    {
+        $result = User::query()->select('id','username','active')
+            ->where('active', User::STATUS_ONLINE)->get();
+
         return $result;
     }
 }

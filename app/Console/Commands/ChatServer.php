@@ -19,6 +19,7 @@ class ChatServer extends Command
     protected $description = 'Initializing Websocket server to send and receive messages';
 
     private int $port;
+    private $socket;
     private UserService $userService;
     private AudioCallService $callService;
     private MessagesService $messagesService;
@@ -42,7 +43,7 @@ class ChatServer extends Command
         $server = IoServer::factory(
             new HttpServer(
                 new WsServer(
-                    new ChatSocket($this->userService, $this->callService, $this->messagesService, $this->userRepository)
+                   new ChatSocket($this->userService, $this->callService, $this->messagesService, $this->userRepository)
                 )
             ),
             $this->port
@@ -50,6 +51,6 @@ class ChatServer extends Command
 
         $server->run();
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

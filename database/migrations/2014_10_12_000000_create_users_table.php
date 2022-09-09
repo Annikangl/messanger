@@ -20,7 +20,7 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->integer('number')->unique()->nullable();
             $table->string('avatar')->nullable();
-            $table->tinyInteger('active');
+            $table->string('active', 16);
             $table->timestamp('last_login');
             $table->timestamps();
         });
