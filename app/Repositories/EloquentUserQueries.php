@@ -89,7 +89,6 @@ class EloquentUserQueries implements UserQueries
             return User::query()->where('id', $id)->value('socket_id');
         });
 
-//        $result =  User::query()->where('id', $id)->value('socket_id');
         return $result;
     }
 
@@ -98,6 +97,12 @@ class EloquentUserQueries implements UserQueries
         $result = User::query()->select('id','username','active')
             ->where('active', User::STATUS_OFFLINE)->get();
 
+        return $result;
+    }
+
+    public function getUsersWithActive(): Collection|array
+    {
+        $result = User::query()->select('id','username','active')->get();
         return $result;
     }
 

@@ -18,7 +18,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
                 ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
                 ->join('users', 'chat_room_user.user_id', 'users.id')
                 ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-                ->select('chat_rooms.id','users.username AS title','messages.id AS message_id',
+                ->select('chat_rooms.id','users.id AS receiver_id','users.username AS title','messages.id AS message_id',
                     'messages.message AS last_message','messages.updated_at')
                 ->where('users.id','<>', $userId)
                 ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {
@@ -48,7 +48,7 @@ class EloquentChatRoomQueries implements ChatRoomQueries
                ->join('chat_rooms', 'chat_room_user.chat_room_id', 'chat_rooms.id')
                ->join('users', 'chat_room_user.user_id', 'users.id')
                ->join('messages', 'messages.chat_room_id', 'chat_rooms.id')
-               ->select('chat_rooms.id','users.username AS title','messages.id AS message_id',
+               ->select('chat_rooms.id','users.id AS receiver_id','users.username AS title','messages.id AS message_id',
                    'messages.message AS last_message','messages.updated_at')
                ->where('users.id','<>', $userId)
                ->whereIn('chat_rooms.id', function (Builder $query) use ($userId) {

@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->exec('node /var/www/messanger/ping.js')->everyMinute();
+        $schedule->exec('node /var/www/messanger/ping.js')->everyFiveMinutes();
     }
 
     /**

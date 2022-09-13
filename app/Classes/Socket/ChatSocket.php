@@ -10,7 +10,6 @@ use App\Http\UseCases\Messages\MessagesService;
 use App\Http\UseCases\User\UserService;
 use App\Repositories\EloquentUserQueries;
 use Exception;
-use http\Exception\RuntimeException;
 use Ratchet\ConnectionInterface;
 use SplObjectStorage;
 
@@ -53,7 +52,7 @@ class ChatSocket extends BaseSocket
         switch ($data['type']) {
             case "subscribe":
                 $this->userService->setSocketId($data['sender_id'], $from->resourceId);
-                $this->broadcastOnlineUsers($from, $data['sender_id']);
+                $this->broadcastOnlineUsers($from->resourceId, $data['sender_id']);
                 break;
             case "ping":
                 $this->setUsersOffline();
@@ -99,40 +98,37 @@ class ChatSocket extends BaseSocket
     public function setUserOnline(array $data): void
     {
         $this->userService->setOnline($data['sender_id']);
-        sleep(2);
-        $offlineUsers = $this->userRepository->getOfflineUsers();
+        $users = $this->userRepository->getUsersWithActive();
 
         $this->broadcastAll([
             'type' => 'offline_users',
-            'offline_users' => $offlineUsers
+            'offline_users' => $users
         ]);
     }
 
     private function setUsersOffline(): void
     {
-        $user = $this->userService->setOffline();
+        $this->userService->setOfflineAll();
         $responseData = ['type' => 'ping'];
         $this->broadcastAll($responseData);
     }
 
-    private function broadcastOnlineUsers(ConnectionInterface $from, int $userId)
+    private function broadcastOnlineUsers(int $socketId, int $userId)
     {
         $users = $this->userRepository->getOnlineUsers();
-        $user = $this->userRepository->getById($userId);
+        $user = $this->userService->setOnline($userId);
 
-        $this->sendTo($from->resourceId, [
+        $this->sendTo($socketId, [
             'type' => 'online_users',
             'online_users' => $users
         ]);
 
-        $broadcast_data = [
+        $this->broadcastAll([
             'type' => 'active_user',
             'id' => $user->id,
             'username' => $user->username,
             'active' => $user->active
-        ];
-
-        $this->broadcastAll($broadcast_data);
+        ]);
     }
 
     public function sendMessage($data, $from): void
@@ -215,7 +211,7 @@ class ChatSocket extends BaseSocket
         $call = $this->callService->accept($data['call_id'], $data['status']);
 
         if (!$call) {
-            throw new RuntimeException('Can`t accept the call');
+            throw new Exception('Can`t accept the call');
         }
 
         $responseData = ["status" => $call->status, "call_id" => $call->id];

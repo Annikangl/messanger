@@ -6,7 +6,6 @@ namespace App\Http\UseCases\User;
 use App\Models\Call;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 
 class UserService
 {
@@ -30,7 +29,7 @@ class UserService
         return $user->setOnline();
     }
 
-    public function setOffline(): int
+    public function setOfflineAll(): int
     {
         return User::query()->update(['active' => User::STATUS_OFFLINE]);
     }
@@ -39,13 +38,5 @@ class UserService
     {
         return User::query()->find($userId);
     }
-
-    private function getUserBySocketId(int $socketId): \Illuminate\Database\Eloquent\Model|Builder|null
-    {
-        return User::query()->where('socket_id', $socketId)->first();
-    }
-
-
-
 
 }
