@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -44,7 +45,7 @@ class  User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'updated_at' => 'datetime:Y-m-d H:i:s'
     ];
 
     public function setOnline(): static
@@ -83,5 +84,19 @@ class  User extends Authenticatable
     public function scopeWithChatRooms(Builder $query, $userId)
     {
         return $query->find($userId)->chatRooms->pluck('id');
+    }
+
+    public function getCreatedAtAttribute($value): ?string
+    {
+        return Carbon::createFromTimestamp(strtotime($value))
+            ->timezone(\Config::get('app.timezone'))
+            ->toDateTimeString();
+    }
+
+    public function getUpdatedAtAttribute($value): ?string
+    {
+        return Carbon::createFromTimestamp(strtotime($value))
+            ->timezone(\Config::get('app.timezone'))
+            ->toDateTimeString();
     }
 }

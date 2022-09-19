@@ -101,8 +101,8 @@ class ChatSocket extends BaseSocket
         $users = $this->userRepository->getUsersWithActive();
 
         $this->broadcastAll([
-            'type' => 'offline_users',
-            'offline_users' => $users
+            'type' => 'users',
+            'users' => $users
         ]);
     }
 
@@ -115,19 +115,20 @@ class ChatSocket extends BaseSocket
 
     private function broadcastOnlineUsers(int $socketId, int $userId)
     {
-        $users = $this->userRepository->getOnlineUsers();
+        $users = $this->userRepository->getUsersWithActive();
         $user = $this->userService->setOnline($userId);
 
         $this->sendTo($socketId, [
-            'type' => 'online_users',
-            'online_users' => $users
+            'type' => 'users',
+            'users' => $users
         ]);
 
         $this->broadcastAll([
             'type' => 'active_user',
             'id' => $user->id,
             'username' => $user->username,
-            'active' => $user->active
+            'active' => $user->active,
+            'updated_at' => $user->updated_at
         ]);
     }
 

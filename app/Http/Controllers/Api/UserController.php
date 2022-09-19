@@ -26,8 +26,6 @@ class UserController extends Controller
             'status' => true,
             'users' => $users
         ]);
-
-//        return new UserCollection($users);
     }
 
     public function show(int $id): \Illuminate\Http\JsonResponse

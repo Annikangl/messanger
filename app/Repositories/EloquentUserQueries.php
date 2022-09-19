@@ -13,13 +13,13 @@ class EloquentUserQueries implements UserQueries
 {
     public function getAll($id): Collection|array
     {
-        $key = __CLASS__ . '_users';
+//        $key = __CLASS__ . '_users';
+//
+//        $result = \Cache::tags('user')->remember($key, 60*60*24, function () use ($id) {
+//            return User::select('id','username','updated_at')->where('id','<>', $id)->get();
+//        });
 
-        $result = \Cache::tags('user')->remember($key, 60*60*24, function () use ($id) {
-            return User::select('id','username')->where('id','<>', $id)->get();
-        });
-
-        return $result;
+        return User::select('id','username','updated_at')->where('id','<>', $id)->get();
     }
 
     public function getById(int $id): User
@@ -102,13 +102,13 @@ class EloquentUserQueries implements UserQueries
 
     public function getUsersWithActive(): Collection|array
     {
-        $result = User::query()->select('id','username','active')->get();
+        $result = User::query()->select('id','username','active','updated_at')->get();
         return $result;
     }
 
     public function getOnlineUsers(): User|Collection
     {
-        $result = User::query()->select('id','username','active')
+        $result = User::query()->select('id','username','active','updated_at')
             ->where('active', User::STATUS_ONLINE)->get();
 
         return $result;
