@@ -8,6 +8,8 @@ use App\Exceptions\MessageException;
 use App\Http\UseCases\Call\AudioCallService;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Http\UseCases\User\UserService;
+use App\Models\Call;
+use App\Models\Message;
 use App\Repositories\EloquentUserQueries;
 use Exception;
 use Ratchet\ConnectionInterface;
@@ -23,9 +25,11 @@ class ChatSocket extends BaseSocket
     private MessagesService $messagesService;
     private EloquentUserQueries $userRepository;
 
-    private static array $errorCallStatuses = [400, 401, 402, 403];
-
-    public function __construct(UserService $userService, AudioCallService $callService, MessagesService $messagesService, EloquentUserQueries $userRepository)
+    public function __construct(
+        UserService $userService,
+        AudioCallService $callService,
+        MessagesService $messagesService,
+        EloquentUserQueries $userRepository)
     {
         $this->clients = new SplObjectStorage();
         $this->audioClients = [];
@@ -35,7 +39,7 @@ class ChatSocket extends BaseSocket
         $this->userRepository = $userRepository;
     }
 
-    public function onOpen(ConnectionInterface $conn)
+    public function onOpen(ConnectionInterface $conn): void
     {
         $this->clients->attach($conn);
         echo "New connection: ({$conn->resourceId})\n";
@@ -113,7 +117,7 @@ class ChatSocket extends BaseSocket
         $this->broadcastAll($responseData);
     }
 
-    private function broadcastOnlineUsers(int $socketId, int $userId)
+    private function broadcastOnlineUsers(int $socketId, int $userId): void
     {
         $users = $this->userRepository->getUsersWithActive();
         $user = $this->userService->setOnline($userId);
@@ -137,6 +141,7 @@ class ChatSocket extends BaseSocket
         $message = null;
 
         try {
+            /** @var Message $message */
             $message = $this->messagesService->create($data);
         } catch (MessageException $exception) {
             $this->onError($from, $exception);
@@ -163,9 +168,9 @@ class ChatSocket extends BaseSocket
 
     public function initialCall($data)
     {
-        if ($data['status'] === 100) {
+        if ($data['status'] === Call::STATUS_CALLING) {
             $this->makeOutboundCall($data);
-        } elseif ($data['status'] === 200) {
+        } elseif ($data['status'] === Call::STATUS_ACCEPTED) {
             $this->acceptCall($data);
         }
     }
@@ -209,19 +214,18 @@ class ChatSocket extends BaseSocket
 
     public function acceptCall(array $data): void
     {
-        $call = $this->callService->accept($data['call_id'], $data['status']);
-
-        if (!$call) {
-            throw new Exception('Can`t accept the call');
+        try {
+            $call = $this->callService->accept($data['call_id'], $data['status']);
+        } catch (Exception $exception) {
+            throw new Exception($exception->getMessage());
         }
 
-        $responseData = ["status" => $call->status, "call_id" => $call->id];
         $receiver = $this->getReceiver($data['call_id'], $data['sender_id']);
 
-        $this->sendTo($receiver, $responseData);
+        $this->sendTo($receiver, ["status" => $call->status, "call_id" => $call->id]);
     }
 
-    public function voiceCall($data)
+    public function voiceCall($data): void
     {
         $receiver = $this->getReceiver($data['call_id'], $data['sender_id']);
         $this->sendTo($receiver, $data);
@@ -229,14 +233,14 @@ class ChatSocket extends BaseSocket
 
     public function closeVoiceCall($data): void
     {
-        if (in_array($data['status'], self::$errorCallStatuses, true)) {
+        if (in_array($data['status'], Call::$errorStatuses, true)) {
             $receiver = $this->getReceiver($data['call_id'], $data['sender_id']);
             $this->sendTo($receiver, $data);
             $this->callService->close($data['call_id'], $data['status'], $data['duration']);
         }
     }
 
-    public function removeMessage($from, mixed $data)
+    public function removeMessage($from, mixed $data): void
     {
         try {
             $this->messagesService->removeForAll($data['message_id']);
@@ -275,7 +279,7 @@ class ChatSocket extends BaseSocket
         }
     }
 
-    private function getReceiver($callId, $userId)
+    private function getReceiver($callId, $userId): int
     {
         $receiver = array_filter($this->audioClients[$callId], function ($socketId) use ($userId) {
             return $socketId !== $userId;

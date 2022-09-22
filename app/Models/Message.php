@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
  * @package App\Models
  * @mixin Builder
  *
+ * @property int $id
  * @property int $sender_id
  * @property int $receiver_id
  * @property ?string $message

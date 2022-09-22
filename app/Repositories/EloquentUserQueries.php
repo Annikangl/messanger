@@ -5,20 +5,13 @@ namespace App\Repositories;
 
 use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class EloquentUserQueries implements UserQueries
 {
-    public function getAll($id): Collection|array
+    public function getAll($id): Collection
     {
-//        $key = __CLASS__ . '_users';
-//
-//        $result = \Cache::tags('user')->remember($key, 60*60*24, function () use ($id) {
-//            return User::select('id','username','updated_at')->where('id','<>', $id)->get();
-//        });
-
         return User::select('id','username','updated_at')->where('id','<>', $id)->get();
     }
 
@@ -35,12 +28,10 @@ class EloquentUserQueries implements UserQueries
 
     public function getByUsername(string $username, int $userId): Collection
     {
-        $result = User::select('id','username','avatar','active','last_login')
+        return User::select('id','username','avatar','active','last_login')
             ->where('username', 'LIKE','%'.$username.'%')
             ->where('id','<>',[$userId])
             ->get();
-
-        return $result;
     }
 
     public function getUsernameById(int $id): ?string
@@ -54,7 +45,7 @@ class EloquentUserQueries implements UserQueries
         return $result;
     }
 
-    public function chatroomByUser(int $id)
+    public function chatroomByUser(int $id): \Illuminate\Support\Collection
     {
         $key = __CLASS__ . 'user_' . $id . '_chatRoom';
 
@@ -92,25 +83,20 @@ class EloquentUserQueries implements UserQueries
         return $result;
     }
 
-    public function getOfflineUsers(): User|Collection
+    public function getOfflineUsers(): Collection
     {
-        $result = User::query()->select('id','username','active')
+        return User::query()->select('id','username','active')
             ->where('active', User::STATUS_OFFLINE)->get();
-
-        return $result;
     }
 
-    public function getUsersWithActive(): Collection|array
+    public function getUsersWithActive(): Collection
     {
-        $result = User::query()->select('id','username','active','updated_at')->get();
-        return $result;
+        return User::query()->select('id','username','active','updated_at')->get();
     }
 
-    public function getOnlineUsers(): User|Collection
+    public function getOnlineUsers(): Collection
     {
-        $result = User::query()->select('id','username','active','updated_at')
+        return User::query()->select('id','username','active','updated_at')
             ->where('active', User::STATUS_ONLINE)->get();
-
-        return $result;
     }
 }

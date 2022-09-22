@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\MessageController;
 
 
 Route::post('/register', [RegisterController::class, 'register']);
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])->name('login');
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::group(['prefix' => 'message', 'as' => 'message.'], function () {
+        Route::post('upload/chatroom/{chatRoomId}/user/{userId}', [MessageController::class, 'uploadFile'])->name('upload');
         Route::get('/chatroom/{chatRoomId}/user/{userId}/dialog/trashed', [MessageController::class, 'trashedList']);
     });
 

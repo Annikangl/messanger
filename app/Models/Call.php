@@ -31,6 +31,8 @@ class Call extends Model
     public const STATUS_ACCEPTED = 200;
     public const STATUS_SPEAKING = 201;
 
+    public static array $errorStatuses = [400, 401, 402, 403];
+
     public function isCalling(): bool
     {
         return $this->status === self::STATUS_CALLING;

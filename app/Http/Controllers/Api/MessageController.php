@@ -2,19 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Exceptions\MessageException;
 use App\Http\Controllers\Controller;
-use App\Models\Message;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use App\Repositories\Interfaces\MessageQueries;
-use App\Repositories\Interfaces\UserQueries;
-use http\Client\Request;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 
 
 class MessageController extends Controller
@@ -57,7 +51,7 @@ class MessageController extends Controller
         ])->setStatusCode(200);
     }
 
-    public function trashedList(int $chatRoomId, int $userId)
+    public function trashedList(int $chatRoomId, int $userId): JsonResponse
     {
         $dialog = $this->messageQueries->getTrashedMessages($chatRoomId);
         $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
@@ -87,6 +81,17 @@ class MessageController extends Controller
             "receiver_id" => $receiver_id,
             "dialog" => array_reverse($dialog->toArray()),
         ])->setStatusCode(200);
+    }
+
+    public function uploadFile(int $chatRoomId, int $userId, Request $request)
+    {
+
+        foreach ($request->allFiles() as $file) {
+            Log::info('File', ['file' => $file->getClientOriginalName()]);
+        }
+
+        return ['status' => true];
+
     }
 
 }

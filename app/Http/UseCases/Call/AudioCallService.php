@@ -26,7 +26,7 @@ class AudioCallService
         $call->close($status, $duration);
     }
 
-    public function accept($id, $status): Call|Builder
+    public function accept($id, $status): Call
     {
         $call = $this->getCall($id);
         $call->accept($status);

@@ -20,6 +20,7 @@ services:
             dockerfile: docker/Fpm.Dockerfile
         volumes:
         -   ./:/var/www/messanger
+        -   ./docker/php.ini:/usr/local/etc/php/php.ini
         depends_on:
             - mysql
         environment:
