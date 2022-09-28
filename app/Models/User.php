@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -21,7 +22,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string password
  * @property int active
  *
- * @method WithChatRooms($userId)
+ * @method static Builder|User query()
+ * @method Builder|Collection withChatRooms($userId)
  */
 class  User extends Authenticatable
 {
@@ -62,9 +64,6 @@ class  User extends Authenticatable
         return $this;
     }
 
-    /**
-     * Chat rooms by user
-     */
     public function chatRooms(): BelongsToMany
     {
         return $this->belongsToMany(ChatRoom::class, 'chat_room_user')
@@ -81,11 +80,22 @@ class  User extends Authenticatable
         return $this->hasMany(Call::class, 'sender_id', 'id');
     }
 
-    public function scopeWithChatRooms(Builder $query, $userId)
+
+    /**
+     * @param Builder $query
+     * @param $userId
+     * @return Collection
+     */
+    public function scopeWithChatRooms(Builder $query, $userId): Collection
     {
         return $query->find($userId)->chatRooms->pluck('id');
     }
 
+    /**
+     * Convert created_at to valid time
+     * @param $value
+     * @return string|null
+     */
     public function getCreatedAtAttribute($value): ?string
     {
         return Carbon::createFromTimestamp(strtotime($value))
@@ -93,6 +103,11 @@ class  User extends Authenticatable
             ->toDateTimeString();
     }
 
+    /**
+     * Convert updated_at to valid time
+     * @param $value
+     * @return string|null
+     */
     public function getUpdatedAtAttribute($value): ?string
     {
         return Carbon::createFromTimestamp(strtotime($value))

@@ -86,6 +86,8 @@ class MessageController extends Controller
     public function uploadFile(int $chatRoomId, int $userId, Request $request)
     {
 
+        Log::info('request', ['data' => $request->allFiles()]);
+
         foreach ($request->allFiles() as $file) {
             Log::info('File', ['file' => $file->getClientOriginalName()]);
         }

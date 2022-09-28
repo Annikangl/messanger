@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 class RegisterService
 {
 
-    public function register(string $username, string $email, string $password, $status)
+    public function register(string $username, string $email, string $password, $status): \Illuminate\Database\Eloquent\Model|User
     {
         $user = User::create([
             'username' => $username,

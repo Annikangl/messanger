@@ -7,9 +7,22 @@ use App\Exceptions\ChatRoom\ChatRoomException;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Models\ChatRoom;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
+/**
+ * Class ChatRoomService
+ * @package App\Http\UseCases\ChatRoomService
+ */
 class ChatRoomService
 {
+    /**
+     * Create new chatroom
+     * @param $title
+     * @param $sender_id
+     * @param $receiver_id
+     * @return int
+     * @throws \Throwable
+     */
     public function create($title, $sender_id, $receiver_id): int
     {
         if (!$chatRoomId = $this->exists($sender_id, $receiver_id)) {
@@ -41,6 +54,12 @@ class ChatRoomService
         return $chatRoomId;
     }
 
+    /**
+     * Check exist chatroom between users
+     * @param int $sender_id
+     * @param int $receiver_id
+     * @return int|bool
+     */
     private function exists(int $sender_id, int $receiver_id): int|bool
     {
         $senderChatRooms = $this->getChatRoomByUser($sender_id);
@@ -53,8 +72,14 @@ class ChatRoomService
         return false;
     }
 
-    private function getChatRoomByUser($userId)
+
+    /**
+     * Return chatrooms ids by user id
+     * @param $userId
+     * @return Collection
+     */
+    private function getChatRoomByUser($userId): Collection
     {
-        return User::withChatRooms($userId);
+        return User::query()->withChatRooms($userId);
     }
 }

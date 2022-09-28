@@ -3,7 +3,6 @@
 
 namespace App\Http\UseCases\Call;
 
-
 use App\Models\Call;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -20,7 +19,7 @@ class AudioCallService
         return $result;
     }
 
-    public function close($id, $status, $duration = null)
+    public function close($id, $status, $duration = null): void
     {
         $call = $this->getCall($id);
         $call->close($status, $duration);

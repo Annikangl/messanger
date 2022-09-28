@@ -3,7 +3,6 @@
 
 namespace App\Http\UseCases\Auth;
 
-
 use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +16,7 @@ class LoginService
         $this->userRepository = $userRepository;
     }
 
-    public function login(string $email, string $password)
+    public function login(string $email, string $password): User
     {
         /** @var User $user */
         $user = $this->userRepository->getByEmail($email);
@@ -28,11 +27,10 @@ class LoginService
             ]);
         }
 
-
         return $user;
     }
 
-    public function createToken(User $user, string $tokenString)
+    public function createToken(User $user, string $tokenString): string
     {
         return $user->createToken($tokenString)->plainTextToken;
     }

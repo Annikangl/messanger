@@ -104,10 +104,7 @@ class ChatSocket extends BaseSocket
         $this->userService->setOnline($data['sender_id']);
         $users = $this->userRepository->getUsersWithActive();
 
-        $this->broadcastAll([
-            'type' => 'users',
-            'users' => $users
-        ]);
+        $this->broadcastAll(['type' => 'users', 'users' => $users]);
     }
 
     private function setUsersOffline(): void
@@ -136,12 +133,11 @@ class ChatSocket extends BaseSocket
         ]);
     }
 
-    public function sendMessage($data, $from): void
+    public function sendMessage(array $data, $from): void
     {
         $message = null;
 
         try {
-            /** @var Message $message */
             $message = $this->messagesService->create($data);
         } catch (MessageException $exception) {
             $this->onError($from, $exception);

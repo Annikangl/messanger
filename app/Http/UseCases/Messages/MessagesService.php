@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 
 class MessagesService
 {
-    public function create(array $message)
+    public function create(array $message): Message
     {
         try {
             $this->validate($message);
