@@ -3,12 +3,15 @@
 
 namespace App\Http\UseCases\Messages;
 
+use App\Classes\FileUploader;
 use App\Exceptions\MessageException;
 use App\Jobs\Message\SaveAudioJob;
 use App\Models\ChatRoom;
-use App\Models\Message;
+use App\Models\Message\File;
+use App\Models\Message\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -16,6 +19,13 @@ use Illuminate\Validation\Rule;
 
 class MessagesService
 {
+    private FileUploader $fileUploader;
+
+    public function __construct(FileUploader $fileUploader)
+    {
+        $this->fileUploader = $fileUploader;
+    }
+
     public function create(array $message): Message
     {
         try {
@@ -76,7 +86,24 @@ class MessagesService
         }
     }
 
-    public function validate($message)
+    public function removeForAll(int $message_id): void
+    {
+        $message = $this->getMessage($message_id);
+        if (!$message) {
+            throw new \DomainException('Message already deleted');
+        }
+        $message->delete();
+    }
+
+    public function upload(UploadedFile $file,string $path): File|Builder
+    {
+        $this->fileUploader->upload($path, $file);
+        $file = File::query()->create(['file' => $path]);
+
+        return $file;
+    }
+
+    private function validate($message)
     {
         $validator = Validator::make($message, [
             'sender_id' => 'required|integer|exists:users,id',
@@ -89,15 +116,6 @@ class MessagesService
         if ($validator->fails()) {
             throw new MessageException('Message not validated ' . $validator->errors()->first());
         }
-    }
-
-    public function removeForAll(int $message_id): void
-    {
-        $message = $this->getMessage($message_id);
-        if (!$message) {
-            throw new \DomainException('Message already deleted');
-        }
-        $message->delete();
     }
 
     private function getChatRoom($id): ChatRoom

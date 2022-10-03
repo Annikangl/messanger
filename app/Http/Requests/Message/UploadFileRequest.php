@@ -2,7 +2,11 @@
 
 namespace App\Http\Requests\Message;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
+
 
 class UploadFileRequest extends FormRequest
 {
@@ -16,6 +20,10 @@ class UploadFileRequest extends FormRequest
         return true;
     }
 
+    protected function failedValidation(Validator $validator): JsonResponse
+    {
+        throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
+    }
     /**
      * Get the validation rules that apply to the request.
      *
@@ -24,7 +32,7 @@ class UploadFileRequest extends FormRequest
     public function rules()
     {
         return [
-            //
+            'files.*' => 'max:10000|mimes:doc,docx'
         ];
     }
 }

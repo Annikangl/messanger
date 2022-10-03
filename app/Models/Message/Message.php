@@ -1,18 +1,20 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Message;
 
+use App\Models\ChatRoom;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Class Message
- * @package App\Models
+ * @package App\Models\Message
  * @mixin Builder
  *
  * @property int $id
@@ -31,16 +33,23 @@ class Message extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = ['sender_id', 'receiver_id', 'message', 'audio', 'chat_room_id'];
+    protected $casts = [
+        'created_at' => 'datetime:H:i'
+    ];
 
     public function chatRoom(): BelongsTo
     {
         return $this->belongsTo(ChatRoom::class);
     }
 
-    // TODO casts[]
-    /*
-     * Convert created_at to hours:minutes format
-     */
+    public function files(): HasMany
+    {
+        return $this->hasMany(File::class);
+    }
+
+//    /*
+//     * Convert created_at to hours:minutes format
+//     */
     public function getCreatedAtAttribute($value): string
     {
         return Carbon::parse($value)->format('H:i');

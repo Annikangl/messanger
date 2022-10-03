@@ -3,7 +3,6 @@
 namespace App\Jobs\Message;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -38,7 +37,7 @@ class SaveAudioJob implements ShouldQueue
     {
         $content = base64_decode($this->message);
         try {
-            Storage::disk('local')->put($this->path, $content);
+            Storage::disk('user_files')->put($this->path, $content);
         } catch (FileException) {
             throw new FileException('Aduio message can`t saved');
         }

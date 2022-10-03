@@ -3,16 +3,12 @@
 
 namespace App\Repositories;
 
-
 use App\Models\ChatRoom;
-use App\Models\Message;
 use App\Repositories\Interfaces\MessageQueries;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\Paginator;
 
 class EloquentMessageQueries implements MessageQueries
 {
-
     public function getWithPaginate(int $chatRoomId, $perPage): \Illuminate\Contracts\Pagination\Paginator
     {
         $result = ChatRoom::find($chatRoomId)

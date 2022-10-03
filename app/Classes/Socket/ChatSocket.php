@@ -4,16 +4,16 @@
 namespace App\Classes\Socket;
 
 use App\Classes\Socket\Base\BaseSocket;
+use SplObjectStorage;
 use App\Exceptions\MessageException;
 use App\Http\UseCases\Call\AudioCallService;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Http\UseCases\User\UserService;
 use App\Models\Call;
-use App\Models\Message;
 use App\Repositories\EloquentUserQueries;
 use Exception;
 use Ratchet\ConnectionInterface;
-use SplObjectStorage;
+
 
 class ChatSocket extends BaseSocket
 {
@@ -266,7 +266,7 @@ class ChatSocket extends BaseSocket
         }
     }
 
-    private function sendTo($receiver, array $data): void
+    public function sendTo($receiver, array $data): void
     {
         foreach ($this->clients as $client) {
             if ($client->resourceId == $receiver) {
