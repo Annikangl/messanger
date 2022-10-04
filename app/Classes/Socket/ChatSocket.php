@@ -156,6 +156,7 @@ class ChatSocket extends BaseSocket
             "username" => $message->username,
             "audio" => $data['audio'],
             "chat_room_id" => $message->chat_room_id,
+            "files" => $message->file_ids,
             "created_at" => $message->created_at
         ];
 
@@ -253,6 +254,7 @@ class ChatSocket extends BaseSocket
         foreach ($receivers as $receiver) {
             foreach ($this->clients as $client) {
                 if ($client->resourceId === $receiver) {
+                    dump($receiver);
                     $client->send(json_encode($data, JSON_THROW_ON_ERROR));
                 }
             }

@@ -17,6 +17,7 @@ class CreateMessagesTable extends Migration
             $table->increments('id');
             $table->integer('sender_id')->unsigned();
             $table->integer('receiver_id')->unsigned();
+            $table->string('type',15);
             $table->text('message')->nullable();
             $table->string('audio',255)->nullable();
             $table->integer('chat_room_id')->unsigned();

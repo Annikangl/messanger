@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Classes\Socket\ChatSocket;
 use App\Http\Controllers\Controller;
 use App\Http\UseCases\Messages\MessagesService;
+use App\Models\User;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use App\Repositories\Interfaces\MessageQueries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 
 
 class MessageController extends Controller
@@ -19,14 +19,12 @@ class MessageController extends Controller
     private MessageQueries $messageQueries;
     private ChatRoomQueries $chatRoomQueries;
     private MessagesService $service;
-    private ChatSocket $socket;
 
-    public function __construct(MessagesService $service, ChatSocket $socket)
+    public function __construct(MessagesService $service)
     {
         $this->messageQueries = app(MessageQueries::class);
         $this->chatRoomQueries = app(ChatRoomQueries::class);
         $this->service = $service;
-        $this->socket = $socket;
     }
 
     /*
@@ -92,7 +90,8 @@ class MessageController extends Controller
 
     public function uploadFile(int $chatRoomId, int $userId, Request $request): JsonResponse
     {
-        $path = 'user-' . $userId . '/files/';
+        $path = User::getBaseFilePath($userId);
+
         $fileIds = [];
 
         if ($files = $request->allFiles()) {
@@ -100,7 +99,7 @@ class MessageController extends Controller
                 $this->validateFile($files);
                 foreach ($files as $uploadedFile) {
                     /** @var UploadedFile $uploadedFile */
-                    $file = $this->service->upload($uploadedFile, $path . $uploadedFile->getClientOriginalName());
+                    $file = $this->service->upload($uploadedFile, $path);
                     $fileIds[] = $file->id;
                 }
             } catch (\DomainException | \Exception $exception) {

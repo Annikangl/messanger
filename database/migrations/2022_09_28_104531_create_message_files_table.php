@@ -18,6 +18,8 @@ class CreateMessageFilesTable extends Migration
             $table->integer('message_id')->unsigned()->default(null);
             $table->foreign('message_id')->references('id')->on('messages')
                 ->onDelete('cascade');
+            $table->string('extension');
+            $table->bigInteger('size')->unsigned();
             $table->string('file');
         });
     }

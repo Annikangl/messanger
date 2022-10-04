@@ -64,6 +64,11 @@ class  User extends Authenticatable
         return $this;
     }
 
+    public static function getBaseFilePath(int $userId): string
+    {
+        return 'user-' . $userId . '/files/';
+    }
+
     public function chatRooms(): BelongsToMany
     {
         return $this->belongsToMany(ChatRoom::class, 'chat_room_user')

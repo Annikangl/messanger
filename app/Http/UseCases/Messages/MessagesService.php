@@ -26,7 +26,7 @@ class MessagesService
         $this->fileUploader = $fileUploader;
     }
 
-    public function create(array $message): Message
+    public function create(array $message)
     {
         try {
             $this->validate($message);
@@ -34,17 +34,29 @@ class MessagesService
             throw new MessageException($exception->getMessage());
         }
 
-        $chatRoom = $this->getChatRoom($message['chat_room_id']);
-
         if (!empty($message['audio']) && !is_null($message['audio'])) {
-            return $this->createAudioMessage($message, $chatRoom);
+            return $this->createAudioMessage($message);
         }
+
+        if (isset($message['message']) && !isset($message['file_ids'])) {
+            return $this->createTextMessage($message);
+        }
+
+        if (isset($message['file_ids'])) {
+            return $this->createAttachmentMessage($message);
+        }
+    }
+
+    private function createTextMessage(array $message): Message
+    {
+        $chatRoom = $this->getChatRoom($message['chat_room_id']);
 
         return DB::transaction(function () use ($message, $chatRoom) {
             /** @var Message $message */
             $message = Message::make([
                 'sender_id' => $message['sender_id'],
                 'receiver_id' => $message['receiver_id'],
+                'type' => $message['type'],
                 'message' => $message['message'],
                 'audio' => null,
             ]);
@@ -53,15 +65,16 @@ class MessagesService
             $message->save();
 
             $message->username = $this->getUser($message['sender_id'])->username;
-
             return $message;
         });
     }
 
-    public function createAudioMessage(array $message, ChatRoom $chatRoom)
+    private function createAudioMessage(array $message)
     {
         $audioMessagePath = 'user-' . $message['sender_id'] . '/voicemessages/voice_'
             . date('d:m:Y H:i:s') . '.arm';
+
+        $chatRoom = $this->getChatRoom($message['chat_room_id']);
 
         try {
             return DB::transaction(function () use ($message, $chatRoom, $audioMessagePath) {
@@ -69,6 +82,7 @@ class MessagesService
                 $audioMessage = Message::make([
                     'sender_id' => $message['sender_id'],
                     'receiver_id' => $message['receiver_id'],
+                    'type' => $message['type'],
                     'message' => null,
                     'audio' => $audioMessagePath,
                 ]);
@@ -86,6 +100,47 @@ class MessagesService
         }
     }
 
+    private function createAttachmentMessage(array $data): Message
+    {
+        $chatRoom = $this->getChatRoom($data['chat_room_id']);
+
+        try {
+            return DB::transaction(function () use ($data, $chatRoom) {
+                /** @var Message $message */
+                $message = Message::make([
+                    'sender_id' => $data['sender_id'],
+                    'receiver_id' => $data['receiver_id'],
+                    'type' => $data['type'],
+                    'message' => $data['message'],
+                    'audio' => null,
+                ]);
+
+                $message->chatRoom()->associate($chatRoom);
+                $message->save();
+
+                File::query()->whereIn('id', $data['file_ids'])->update([
+                    'message_id' => $message->id
+                ]);
+
+                $file_info = [];
+
+                $message->files()->each(function ($value) use (&$file_info) {
+                    /** @var File $value */
+                    $file_info[$value->id]['filename'] =  \Str::after($value->file, '/files/');
+                    $file_info[$value->id]['extension'] = $value->extension;
+                    $file_info[$value->id]['size'] = $value->size;
+                    $file_info[$value->id]['text_size'] = $value->calculateMegabytes();
+                });
+
+                $message->username = $this->getUser($message['sender_id'])->username;
+                $message->file_ids = $file_info;
+                return $message;
+            });
+        } catch (MessageException $exception) {
+            throw new MessageException($exception->getMessage());
+        }
+    }
+
     public function removeForAll(int $message_id): void
     {
         $message = $this->getMessage($message_id);
@@ -95,10 +150,16 @@ class MessagesService
         $message->delete();
     }
 
-    public function upload(UploadedFile $file,string $path): File|Builder
+    public function upload(UploadedFile $file, string $path): File|Builder
     {
         $this->fileUploader->upload($path, $file);
-        $file = File::query()->create(['file' => $path]);
+        $filePath = $path . $file->getClientOriginalName();
+
+        $file = File::query()->create([
+            'file' => $filePath,
+            'extension' => $file->getClientOriginalExtension(),
+            'size' => $file->getSize()
+        ]);
 
         return $file;
     }
@@ -109,6 +170,7 @@ class MessagesService
             'sender_id' => 'required|integer|exists:users,id',
             'receiver_id' => 'required|integer|exists:users,id',
             'chat_room_id' => 'required|integer|exists:chat_rooms,id',
+            'type' => 'required|string',
             'message' => Rule::requiredIf(empty($message['audio']) || is_null($message['audio'])),
             'audio' => Rule::requiredIf(empty($message['message']) || is_null($message['message'])),
         ]);

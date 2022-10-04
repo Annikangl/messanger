@@ -10,7 +10,7 @@ class FileUploader
 {
     public function upload(string $path, UploadedFile $file): void
     {
-        if (!\Storage::disk('user_files')->put($path, $file)) {
+        if (!\Storage::disk('user_files')->putFileAs($path, $file, $file->getClientOriginalName())) {
             throw new \Exception('File ' . $file->getClientOriginalName() . ' not uploaded on server!');
         }
     }
