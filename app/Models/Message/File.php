@@ -22,6 +22,7 @@ class File extends Model
     public $timestamps = false;
     protected $fillable = ['message_id', 'file', 'extension', 'size'];
     protected $table = 'message_files';
+    protected $hidden = ['laravel_through_key'];
 
     public function calculateMegabytes($precision = 2): string
     {
@@ -30,6 +31,8 @@ class File extends Model
 
         return round(pow(1024, $base - floor($base)), $precision) .''. $suffixes[floor($base)];
     }
+
+
 
 
 }

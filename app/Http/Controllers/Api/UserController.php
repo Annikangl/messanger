@@ -6,8 +6,11 @@ use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserCollection;
 use App\Http\Resources\UserResource;
+use App\Models\Message\File;
+use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -37,6 +40,25 @@ class UserController extends Controller
         }
 
         return response()->json(['status ' => true, 'user' => $user])
+            ->setStatusCode(200);
+    }
+
+    public function showFileList(int $userId)
+    {
+        $user = User::query()->find($userId);
+        $files = $user->files()
+            ->select('message_files.id','message_files.file AS filename','message_files.extension','message_files.size')
+            ->get();
+
+        $data = collect();
+        $files->each(function ($value) use (&$data) {
+            /** @var File $value */
+            $value->text_size = $value->calculateMegabytes();
+            $value->filename = Str::after( $value->filename, '/files/',);
+            $data->push($value);
+        });
+
+        return response()->json(['status' => true, 'files' => $data])
             ->setStatusCode(200);
     }
 

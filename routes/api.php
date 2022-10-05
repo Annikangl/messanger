@@ -16,8 +16,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::group(['prefix' => 'user','as' => 'user.'], function () {
         Route::get('/{id}/all', [UserController::class, 'index'])->name('index');
         Route::get('/{id}', [UserController::class, 'show'])->name('show');
-        Route::get('/{id}/friends', [UserController::class, 'friends'])->name('friends');
-        Route::get('/{id}/search/{username}', [UserController::class, 'searchUser'])->where('username','.*');
+        Route::get('/{id}/search/{username}', [UserController::class, 'searchUser'])
+            ->where('username','.*');
+        Route::get('/{id}/repository', [UserController::class, 'showFileList'])->name('repository');
     });
 
     Route::group(['prefix' => 'chatroom', 'as' => 'chatroom.'], function () {
