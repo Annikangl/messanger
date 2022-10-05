@@ -26,6 +26,14 @@ class EloquentUserQueries implements UserQueries
         return $result;
     }
 
+    public function getFileList(int $userId): Collection
+    {
+        $user = User::query()->find($userId);
+        return $user->files()
+            ->select('message_files.id','message_files.message_id', 'message_files.file AS filename','message_files.extension','message_files.size')
+            ->get();
+    }
+
     public function getByUsername(string $username, int $userId): Collection
     {
         return User::select('id','username','avatar','active','last_login')

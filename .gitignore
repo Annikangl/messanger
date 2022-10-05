@@ -4,6 +4,8 @@
 /storage/*.key
 /vendor
 /dump
+/storage/docker
+/code.txt
 .env
 .env.production
 .env.backup

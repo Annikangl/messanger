@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\UserCollection;
-use App\Http\Resources\UserResource;
+use App\Models\Message\File;
+use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -18,7 +19,7 @@ class UserController extends Controller
         $this->userRepository = $userRepository;
     }
 
-    public function index($id): \Illuminate\Http\JsonResponse
+    public function index($id): JsonResponse
     {
         $users = $this->userRepository->getAll($id);
 
@@ -28,7 +29,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function show(int $id): \Illuminate\Http\JsonResponse
+    public function show(int $id): JsonResponse
     {
         $user = $this->userRepository->getById($id);
 
@@ -40,7 +41,24 @@ class UserController extends Controller
             ->setStatusCode(200);
     }
 
-    public function searchUser(int $userId, string $username): \Illuminate\Http\JsonResponse
+    public function showFileList(int $userId): JsonResponse
+    {
+        $files = $this->userRepository->getFileList($userId);
+
+        $data = collect();
+
+        $files->each(function ($value) use (&$data) {
+            /** @var File $value */
+            $value->text_size = $value->calculateMegabytes();
+            $value->filename = Str::after( $value->filename, '/files/',);
+            $data->push($value);
+        });
+
+        return response()->json(['status' => true, 'files' => $data])
+            ->setStatusCode(200);
+    }
+
+    public function searchUser(int $userId, string $username): JsonResponse
     {
         $user = $this->userRepository->getByUsername($username, $userId);
 

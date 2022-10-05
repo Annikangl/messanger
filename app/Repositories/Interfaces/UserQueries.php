@@ -8,6 +8,7 @@ interface UserQueries
 {
     public function getAll($id);
     public function getById(int $id);
+    public function getFileList(int $userId);
     public function getByUsername(string $username, int $userId);
     public function getUsernameById(int $id);
     public function getByEmail(string $email);

@@ -123,6 +123,7 @@ class MessagesService
                 ]);
 
                 $file_info = [];
+                $info = collect();
 
                 $message->files()->each(function ($value) use (&$file_info, $message) {
                     /** @var File $value */
