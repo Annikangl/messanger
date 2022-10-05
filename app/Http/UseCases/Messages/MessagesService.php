@@ -124,8 +124,10 @@ class MessagesService
 
                 $file_info = [];
 
-                $message->files()->each(function ($value) use (&$file_info) {
+                $message->files()->each(function ($value) use (&$file_info, $message) {
                     /** @var File $value */
+                    $file_info[$value->id]['id'] = $value->id;
+                    $file_info[$value->id]['message_id'] = $message->id;
                     $file_info[$value->id]['filename'] =  \Str::after($value->file, '/files/');
                     $file_info[$value->id]['extension'] = $value->extension;
                     $file_info[$value->id]['size'] = $value->size;
@@ -133,7 +135,7 @@ class MessagesService
                 });
 
                 $message->username = $this->getUser($message['sender_id'])->username;
-                $message->file_ids = $file_info;
+                $message->file_ids = array_values($file_info);
                 return $message;
             });
         } catch (MessageException $exception) {
