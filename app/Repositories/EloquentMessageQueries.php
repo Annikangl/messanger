@@ -13,8 +13,11 @@ class EloquentMessageQueries implements MessageQueries
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
+            ->leftJoin('message_files', 'messages.id', '=','message_files.message_id')
             ->select('messages.id as message_id','messages.sender_id','messages.receiver_id','messages.message',
-                'messages.audio','messages.created_at')
+                'messages.audio',
+                'message_files.file',
+                'messages.created_at')
             ->latest('messages.created_at')
             ->simplePaginate($perPage);
 
