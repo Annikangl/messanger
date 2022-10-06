@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Message\File;
-use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -50,7 +49,7 @@ class UserController extends Controller
         $files->each(function ($value) use (&$data) {
             /** @var File $value */
             $value->text_size = $value->calculateMegabytes();
-            $value->filename = Str::after( $value->filename, '/files/',);
+            $value->filename = Str::after($value->filename, '/files/',);
             $data->push($value);
         });
 
