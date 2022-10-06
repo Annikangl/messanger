@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
  * @property array $file_ids
  * @property ?string $audio
  * @property int $chat_room_id
+ * @property HasMany $files
  * @property Carbon $created_at
  * @property Carbon $updated_at
  *

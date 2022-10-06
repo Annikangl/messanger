@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\UseCases\Messages\MessagesService;
+use App\Models\Message\File;
 use App\Models\User;
 use App\Repositories\Interfaces\ChatRoomQueries;
 use App\Repositories\Interfaces\MessageQueries;
@@ -26,7 +27,7 @@ class MessageController extends Controller
         $this->service = $service;
     }
 
-    /*
+    /**
      * Get dialog by chat_room
      * $dialog - collect of messages by ChatRoomId
      * receiver_id -  receiver ID in chat room
@@ -36,8 +37,13 @@ class MessageController extends Controller
         $dialog = $this->messageQueries->getPaginate($chatRoomId);
 
         foreach ($dialog as $key => $conversation) {
-            if (!is_null($conversation->audio)) {
-                $conversation->audio = base64_encode(Storage::disk('user_files')->get($conversation->audio));
+            foreach ($conversation['files'] as $file) {
+                /** @var File $file */
+                $file->text_size = $file->calculateMegabytes();
+            }
+
+            if (!is_null($conversation['audio'])) {
+                $conversation['audio'] = base64_encode(Storage::disk('user_files')->get($conversation['audio']));
             }
         }
 
@@ -73,8 +79,13 @@ class MessageController extends Controller
             : $dialog = $this->messageQueries->getNewMessage($chatRoomId, $messageId);
 
         foreach ($dialog as $key => $conversation) {
-            if (!is_null($conversation->audio)) {
-                $conversation->audio = base64_encode(Storage::disk('user_files')->get($conversation->audio));
+            foreach ($conversation['files'] as $file) {
+                /** @var File $file */
+                $file->text_size = $file->calculateMegabytes();
+            }
+
+            if (!is_null($conversation['audio'])) {
+                $conversation['audio'] = base64_encode(Storage::disk('user_files')->get($conversation['audio']));
             }
         }
 

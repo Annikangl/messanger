@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  * @package App\Models\Message
  * @property int $id
  * @property int $message_id
- * @property string $file
+ * @property string $filename
  * @property string $extension
  * @property int $size
  */
@@ -20,7 +20,7 @@ class File extends Model
     use HasFactory;
 
     public $timestamps = false;
-    protected $fillable = ['message_id', 'file', 'extension', 'size'];
+    protected $fillable = ['message_id', 'filename', 'extension', 'size'];
     protected $table = 'message_files';
     protected $hidden = ['laravel_through_key'];
 
@@ -32,7 +32,10 @@ class File extends Model
         return round(pow(1024, $base - floor($base)), $precision) .''. $suffixes[floor($base)];
     }
 
-
+    public function getFilenameAttribute($value): string
+    {
+        return \Str::after($value, '/files/');
+    }
 
 
 }

@@ -30,7 +30,7 @@ class EloquentUserQueries implements UserQueries
     {
         $user = User::query()->find($userId);
         return $user->files()
-            ->select('message_files.id','message_files.message_id', 'message_files.file AS filename','message_files.extension','message_files.size')
+            ->select('message_files.id','message_files.message_id', 'message_files.filename','message_files.extension','message_files.size')
             ->get();
     }
 

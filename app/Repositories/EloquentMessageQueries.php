@@ -4,6 +4,7 @@
 namespace App\Repositories;
 
 use App\Models\ChatRoom;
+use App\Models\Message\Message;
 use App\Repositories\Interfaces\MessageQueries;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -11,15 +12,20 @@ class EloquentMessageQueries implements MessageQueries
 {
     public function getPaginate(int $chatRoomId, $perPage = 15): \Illuminate\Contracts\Pagination\Paginator
     {
-        $result = ChatRoom::find($chatRoomId)
-            ->messages()
-            ->leftJoin('message_files', 'messages.id', '=','message_files.message_id')
-            ->select('messages.id as message_id','messages.sender_id','messages.receiver_id','messages.message',
-                'messages.audio',
-                'message_files.file',
-                'messages.created_at')
-            ->latest('messages.created_at')
-            ->simplePaginate($perPage);
+        $result = Message::query()->with('files')->where('chat_room_id', $chatRoomId)
+            ->simplePaginate($perPage)
+            ->through(function ($item) {
+                /** @var Message $item */
+                return [
+                    'message_id' => $item->id,
+                    'sender_id' => $item->sender_id,
+                    'receiver_id' => $item->receiver_id,
+                    'message' => $item->message,
+                    'audio' => $item->audio,
+                    'created_at' => $item->created_at,
+                    'files' => $item->files
+                ];
+            });
 
         return $result;
     }
@@ -48,29 +54,41 @@ class EloquentMessageQueries implements MessageQueries
         return $result;
     }
 
-    public function getNewMessage(int $chatRoomId, int $messageId): Collection
+    public function getNewMessage(int $chatRoomId, int $messageId): \Illuminate\Support\Collection
     {
-        $result = ChatRoom::find($chatRoomId)
-            ->messages()
-            ->select('messages.id as message_id', 'messages.sender_id as sender_id', 'messages.message', 'messages.audio', 'messages.created_at')
-            ->where('messages.id', '>', $messageId)
-            ->latest('messages.created_at')
-            ->get();
-
-        return $result;
+        return Message::query()->with('files')
+            ->where('chat_room_id', $chatRoomId)
+            ->where('messages.id', '>', $messageId)->get()
+            ->map(function ($item) {
+                /** @var Message $item */
+                return [
+                    'message_id' => $item->id,
+                    'sender_id' => $item->sender_id,
+                    'receiver_id' => $item->receiver_id,
+                    'message' => $item->message,
+                    'audio' => $item->audio,
+                    'created_at' => $item->created_at,
+                    'files' => $item->files
+                ];
+            });
     }
 
-    public function getOldMessage(int $chatRoomId, int $messageId): Collection
+    public function getOldMessage(int $chatRoomId, int $messageId): \Illuminate\Support\Collection
     {
-        $result = ChatRoom::findOrFail($chatRoomId)
-            ->messages()
-            ->select('messages.id as message_id', 'messages.sender_id as sender_id', 'messages.message', 'messages.audio', 'messages.created_at')
-            ->where('messages.id', '<', $messageId)
-            ->latest('messages.created_at')
-            ->limit(15)
-            ->get();
-
-        return $result;
+        return Message::query()->with('files')->where('chat_room_id', $chatRoomId)
+            ->where('messages.id', '<', $messageId)->get()
+            ->map(function ($item) {
+                /** @var Message $item */
+                return [
+                    'message_id' => $item->id,
+                    'sender_id' => $item->sender_id,
+                    'receiver_id' => $item->receiver_id,
+                    'message' => $item->message,
+                    'audio' => $item->audio,
+                    'created_at' => $item->created_at,
+                    'files' => $item->files
+                ];
+            });
     }
 
 

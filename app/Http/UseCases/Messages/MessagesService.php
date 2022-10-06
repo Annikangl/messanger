@@ -128,7 +128,7 @@ class MessagesService
                     /** @var File $value */
                     $file_info[$value->id]['id'] = $value->id;
                     $file_info[$value->id]['message_id'] = $message->id;
-                    $file_info[$value->id]['filename'] =  \Str::after($value->file, '/files/');
+                    $file_info[$value->id]['filename'] =  $value->filename;
                     $file_info[$value->id]['extension'] = $value->extension;
                     $file_info[$value->id]['size'] = $value->size;
                     $file_info[$value->id]['text_size'] = $value->calculateMegabytes();
@@ -158,7 +158,7 @@ class MessagesService
         $filePath = $path . $file->getClientOriginalName();
 
         $file = File::query()->create([
-            'file' => $filePath,
+            'filename' => $filePath,
             'extension' => $file->getClientOriginalExtension(),
             'size' => $file->getSize()
         ]);

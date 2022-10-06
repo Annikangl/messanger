@@ -49,7 +49,6 @@ class UserController extends Controller
         $files->each(function ($value) use (&$data) {
             /** @var File $value */
             $value->text_size = $value->calculateMegabytes();
-            $value->filename = Str::after($value->filename, '/files/',);
             $data->push($value);
         });
 
