@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Message\File;
-use App\Models\User;
 use App\Repositories\Interfaces\UserQueries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -57,6 +56,7 @@ class UserController extends Controller
         return response()->json(['status' => true, 'files' => $data])
             ->setStatusCode(200);
     }
+
 
     public function searchUser(int $userId, string $username): JsonResponse
     {
