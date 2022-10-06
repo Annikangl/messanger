@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Collection;
 
 class EloquentMessageQueries implements MessageQueries
 {
-    public function getWithPaginate(int $chatRoomId, $perPage): \Illuminate\Contracts\Pagination\Paginator
+    public function getPaginate(int $chatRoomId, $perPage = 15): \Illuminate\Contracts\Pagination\Paginator
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
-            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
+            ->select('messages.id as message_id','messages.sender_id','messages.receiver_id','messages.message',
+                'messages.audio','messages.created_at')
             ->latest('messages.created_at')
             ->simplePaginate($perPage);
 
@@ -26,7 +27,7 @@ class EloquentMessageQueries implements MessageQueries
             ->messages()
             ->withTrashed()
             ->whereNotNull('deleted_at')
-            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message')
+            ->select('messages.id as message_id', 'messages.sender_id as sender_id', 'messages.message')
             ->latest('messages.deleted_at')
             ->get();
 
@@ -37,7 +38,7 @@ class EloquentMessageQueries implements MessageQueries
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
-            ->select('messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
+            ->select('messages.sender_id as sender_id', 'messages.message', 'messages.audio', 'messages.created_at')
             ->latest('messages.created_at')
             ->get();
 
@@ -48,7 +49,7 @@ class EloquentMessageQueries implements MessageQueries
     {
         $result = ChatRoom::find($chatRoomId)
             ->messages()
-            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
+            ->select('messages.id as message_id', 'messages.sender_id as sender_id', 'messages.message', 'messages.audio', 'messages.created_at')
             ->where('messages.id', '>', $messageId)
             ->latest('messages.created_at')
             ->get();
@@ -60,7 +61,7 @@ class EloquentMessageQueries implements MessageQueries
     {
         $result = ChatRoom::findOrFail($chatRoomId)
             ->messages()
-            ->select('messages.id as message_id','messages.sender_id as sender_id', 'messages.message','messages.audio','messages.created_at')
+            ->select('messages.id as message_id', 'messages.sender_id as sender_id', 'messages.message', 'messages.audio', 'messages.created_at')
             ->where('messages.id', '<', $messageId)
             ->latest('messages.created_at')
             ->limit(15)
@@ -68,7 +69,6 @@ class EloquentMessageQueries implements MessageQueries
 
         return $result;
     }
-
 
 
 }

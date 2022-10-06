@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Classes\Socket\ChatSocket;
 use App\Http\Controllers\Controller;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Models\User;
@@ -34,7 +33,7 @@ class MessageController extends Controller
      */
     public function index(int $chatRoomId, int $userId): JsonResponse
     {
-        $dialog = $this->messageQueries->getWithPaginate($chatRoomId, 15);
+        $dialog = $this->messageQueries->getPaginate($chatRoomId);
 
         foreach ($dialog as $key => $conversation) {
             if (!is_null($conversation->audio)) {

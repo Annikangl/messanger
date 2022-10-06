@@ -50,14 +50,16 @@ class Message extends Model
         return $this->hasMany(File::class);
     }
 
-//    /*
-//     * Convert created_at to hours:minutes format
-//     */
+
+    /**
+     * Convert created-at to format
+     * @param $value
+     * @return string
+     */
     public function getCreatedAtAttribute($value): string
     {
         return Carbon::parse($value)->format('H:i');
     }
-
 
     public function setMessageAttribute($value): void
     {
