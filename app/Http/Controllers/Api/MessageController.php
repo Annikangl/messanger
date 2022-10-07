@@ -11,19 +11,18 @@ use App\Repositories\Interfaces\MessageQueries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Storage;
 
 
 class MessageController extends Controller
 {
     private MessageQueries $messageQueries;
-    private ChatRoomQueries $chatRoomQueries;
     private MessagesService $service;
 
     public function __construct(MessagesService $service)
     {
         $this->messageQueries = app(MessageQueries::class);
-        $this->chatRoomQueries = app(ChatRoomQueries::class);
         $this->service = $service;
     }
 
@@ -34,24 +33,15 @@ class MessageController extends Controller
      */
     public function index(int $chatRoomId, int $userId): JsonResponse
     {
+        /** @var Paginator $dialog */
         $dialog = $this->messageQueries->getPaginate($chatRoomId);
 
-        foreach ($dialog as $key => $conversation) {
-            foreach ($conversation['files'] as $file) {
-                /** @var File $file */
-                $file->text_size = $file->calculateMegabytes();
-            }
-
-            if (!is_null($conversation['audio'])) {
-                $conversation['audio'] = base64_encode(Storage::disk('user_files')->get($conversation['audio']));
-            }
-        }
-
-        $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
+        $this->putdAudioInfo($dialog);
+        $this->putFileInfo($dialog);
 
         return response()->json([
             "status" => true,
-            "receiver_id" => $receiver_id,
+            "receiver_id" => $dialog->isNotEmpty() ? $dialog->first()['receiver_id'] : null,
             "dialog" => array_reverse($dialog->toArray()['data']),
             "pagination" => [
                 'currentPage' => $dialog->currentPage(),
@@ -64,25 +54,26 @@ class MessageController extends Controller
     public function trashedList(int $chatRoomId, int $userId): JsonResponse
     {
         $dialog = $this->messageQueries->getTrashedMessages($chatRoomId);
-        $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
 
         return response()->json([
             'status' => true,
-            'receiver_id' => $receiver_id,
+            'receiver_id' => $dialog->isNotEmpty() ? $dialog->first()['receiver_id'] : null,
             'dialog' => array_reverse($dialog->toArray()),
         ])->setStatusCode(200);
     }
 
+    // TODO Split to two methods
     public function newOrAllMessages(int $chatRoomId, int $userId, int $messageId, $old = null): JsonResponse
     {
         $old ? $dialog = $this->messageQueries->getOldMessage($chatRoomId, $messageId)
             : $dialog = $this->messageQueries->getNewMessage($chatRoomId, $messageId);
 
-        $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
+        $this->putdAudioInfo($dialog);
+        $this->putFileInfo($dialog);
 
         return response()->json([
             "status" => true,
-            "receiver_id" => $receiver_id,
+            "receiver_id" => $dialog->isNotEmpty() ? $dialog->first()['receiver_id'] : null,
             "dialog" => array_reverse($dialog->toArray()),
         ])->setStatusCode(200);
     }
@@ -124,20 +115,23 @@ class MessageController extends Controller
         }
     }
 
-    private function transformDialog($dialog)
+    private function putFileInfo($dialog): void
     {
         foreach ($dialog as $key => $conversation) {
             foreach ($conversation['files'] as $file) {
                 /** @var File $file */
                 $file->text_size = $file->calculateMegabytes();
             }
+        }
+    }
 
+    private function putdAudioInfo($dialog): void
+    {
+        foreach ($dialog as $key => $conversation) {
             if (!is_null($conversation['audio'])) {
                 $conversation['audio'] = base64_encode(Storage::disk('user_files')->get($conversation['audio']));
             }
         }
-
-        return $dialog;
     }
 
 }
