@@ -107,7 +107,7 @@ class MessagesService
         try {
             return DB::transaction(function () use ($data, $chatRoom) {
                 /** @var Message $message */
-                $message = Message::make([
+                $fileMessage = Message::make([
                     'sender_id' => $data['sender_id'],
                     'receiver_id' => $data['receiver_id'],
                     'type' => $data['type'],
@@ -115,28 +115,24 @@ class MessagesService
                     'audio' => null,
                 ]);
 
-                $message->chatRoom()->associate($chatRoom);
-                $message->save();
+                $fileMessage->chatRoom()->associate($chatRoom);
+                $fileMessage->save();
 
                 File::query()->whereIn('id', $data['file_ids'])->update([
-                    'message_id' => $message->id
+                    'message_id' => $fileMessage->id
                 ]);
 
-                $file_info = [];
+                $file_info = collect();
 
-                $message->files()->each(function ($value) use (&$file_info, $message) {
+                $message->files()->each(function ($value) use (&$file_info, $fileMessage) {
                     /** @var File $value */
-                    $file_info[$value->id]['id'] = $value->id;
-                    $file_info[$value->id]['message_id'] = $message->id;
-                    $file_info[$value->id]['filename'] =  $value->filename;
-                    $file_info[$value->id]['extension'] = $value->extension;
-                    $file_info[$value->id]['size'] = $value->size;
-                    $file_info[$value->id]['text_size'] = $value->calculateMegabytes();
+                    $value->text_size = $value->calculateMegabytes();
+                    $file_info->push($value);
                 });
 
-                $message->username = $this->getUser($message['sender_id'])->username;
-                $message->file_ids = array_values($file_info);
-                return $message;
+                $fileMessage->username = $this->getUser($message['sender_id'])->username;
+                $fileMessage->file_ids = $file_info->toArray();
+                return $fileMessage;
             });
         } catch (MessageException $exception) {
             throw new MessageException($exception->getMessage());

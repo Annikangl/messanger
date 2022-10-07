@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $filename
  * @property string $extension
  * @property int $size
+ * @property string $text_size
  */
 
 class File extends Model
@@ -27,9 +28,9 @@ class File extends Model
     public function calculateMegabytes($precision = 2): string
     {
         $base = log($this->size, 1024);
-        $suffixes = array('', 'KB', 'MB', 'GB', 'T');
+        $suffixes = ['', 'KB', 'MB', 'GB', 'T'];
 
-        return round(pow(1024, $base - floor($base)), $precision) .''. $suffixes[floor($base)];
+        return round(pow(1024, $base - floor($base)), $precision) .' '. $suffixes[floor($base)];
     }
 
     public function getFilenameAttribute($value): string

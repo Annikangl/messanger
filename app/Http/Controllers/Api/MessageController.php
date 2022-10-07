@@ -78,17 +78,6 @@ class MessageController extends Controller
         $old ? $dialog = $this->messageQueries->getOldMessage($chatRoomId, $messageId)
             : $dialog = $this->messageQueries->getNewMessage($chatRoomId, $messageId);
 
-        foreach ($dialog as $key => $conversation) {
-            foreach ($conversation['files'] as $file) {
-                /** @var File $file */
-                $file->text_size = $file->calculateMegabytes();
-            }
-
-            if (!is_null($conversation['audio'])) {
-                $conversation['audio'] = base64_encode(Storage::disk('user_files')->get($conversation['audio']));
-            }
-        }
-
         $receiver_id = $this->chatRoomQueries->getReceiverByChatRoom($chatRoomId, $userId);
 
         return response()->json([
@@ -133,6 +122,22 @@ class MessageController extends Controller
                 throw new \DomainException($validator->errors()->first(), 422);
             }
         }
+    }
+
+    private function transformDialog($dialog)
+    {
+        foreach ($dialog as $key => $conversation) {
+            foreach ($conversation['files'] as $file) {
+                /** @var File $file */
+                $file->text_size = $file->calculateMegabytes();
+            }
+
+            if (!is_null($conversation['audio'])) {
+                $conversation['audio'] = base64_encode(Storage::disk('user_files')->get($conversation['audio']));
+            }
+        }
+
+        return $dialog;
     }
 
 }
