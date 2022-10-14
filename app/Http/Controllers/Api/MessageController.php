@@ -42,7 +42,7 @@ class MessageController extends Controller
         return response()->json([
             "status" => true,
             "receiver_id" => $dialog->isNotEmpty() ? $dialog->first()['receiver_id'] : null,
-            "dialog" => array_reverse($dialog->toArray()['data']),
+            "dialog" => $dialog->toArray()['data'],
             "pagination" => [
                 'currentPage' => $dialog->currentPage(),
                 'next_page_url' => $dialog->nextPageUrl(),
@@ -58,7 +58,7 @@ class MessageController extends Controller
         return response()->json([
             'status' => true,
             'receiver_id' => $dialog->isNotEmpty() ? $dialog->first()['receiver_id'] : null,
-            'dialog' => array_reverse($dialog->toArray()),
+            'dialog' => $dialog->toArray(),
         ])->setStatusCode(200);
     }
 
@@ -74,7 +74,7 @@ class MessageController extends Controller
         return response()->json([
             "status" => true,
             "receiver_id" => $dialog->isNotEmpty() ? $dialog->first()['receiver_id'] : null,
-            "dialog" => array_reverse($dialog->toArray()),
+            "dialog" => $dialog->toArray(),
         ])->setStatusCode(200);
     }
 

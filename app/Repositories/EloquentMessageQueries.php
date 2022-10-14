@@ -13,6 +13,7 @@ class EloquentMessageQueries implements MessageQueries
     public function getPaginate(int $chatRoomId, $perPage = 15): \Illuminate\Contracts\Pagination\Paginator
     {
         $result = Message::query()->with('files')->where('chat_room_id', $chatRoomId)
+            ->latest('messages.created_at')
             ->simplePaginate($perPage)
             ->through(function ($item) {
                 /** @var Message $item */

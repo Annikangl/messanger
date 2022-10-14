@@ -6,6 +6,7 @@ namespace App\Http\UseCases\ChatRoomService;
 use App\Exceptions\ChatRoom\ChatRoomException;
 use App\Http\UseCases\Messages\MessagesService;
 use App\Models\ChatRoom;
+use App\Models\Message\Message;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
@@ -33,6 +34,7 @@ class ChatRoomService
                 $chatRoom->users()->attach([$sender_id, $receiver_id]);
 
                 $message = [
+                    'type' => Message::TYPE_MESSAGE,
                     'sender_id' => $sender_id,
                     'receiver_id' => $receiver_id,
                     'message' => "Чат создан!",

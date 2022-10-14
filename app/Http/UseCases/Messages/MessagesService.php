@@ -38,7 +38,7 @@ class MessagesService
             return $this->createAudioMessage($message);
         }
 
-        if (isset($message['message']) && !isset($message['file_ids'])) {
+        if (isset($message['message']) && empty($message['file_ids'])) {
             return $this->createTextMessage($message);
         }
 
@@ -47,24 +47,24 @@ class MessagesService
         }
     }
 
-    private function createTextMessage(array $message): Message
+    private function createTextMessage(array $data): Message
     {
-        $chatRoom = $this->getChatRoom($message['chat_room_id']);
+        $chatRoom = $this->getChatRoom($data['chat_room_id']);
 
-        return DB::transaction(function () use ($message, $chatRoom) {
+        return DB::transaction(function () use ($data, $chatRoom) {
             /** @var Message $message */
             $message = Message::make([
-                'sender_id' => $message['sender_id'],
-                'receiver_id' => $message['receiver_id'],
-                'type' => $message['type'],
-                'message' => $message['message'],
+                'sender_id' => $data['sender_id'],
+                'receiver_id' => $data['receiver_id'],
+                'type' => $data['type'],
+                'message' => $data['message'],
                 'audio' => null,
             ]);
 
             $message->chatRoom()->associate($chatRoom);
             $message->save();
 
-            $message->username = $this->getUser($message['sender_id'])->username;
+            $message->username = $this->getUser($data['sender_id'])->username;
             return $message;
         });
     }
@@ -124,7 +124,7 @@ class MessagesService
 
                 $file_info = collect();
 
-                $message->files()->each(function ($value) use (&$file_info, $fileMessage) {
+                $fileMessage->files()->each(function ($value) use (&$file_info, $fileMessage) {
                     /** @var File $value */
                     $value->text_size = $value->calculateMegabytes();
                     $file_info->push($value);

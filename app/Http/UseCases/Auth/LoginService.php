@@ -22,9 +22,7 @@ class LoginService
         $user = $this->userRepository->getByEmail($email);
 
         if (!$user || ! \Hash::check($password, $user->password)) {
-            throw ValidationException::withMessages([
-                'error' => ['The provided credentials are incorrect'],
-            ]);
+            throw new \DomainException('Invalid login or password');
         }
 
         return $user;

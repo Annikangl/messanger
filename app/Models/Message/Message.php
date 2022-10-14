@@ -36,6 +36,10 @@ class Message extends Model
 {
     use HasFactory, SoftDeletes;
 
+    const TYPE_MESSAGE = 'message';
+    const TYPE_AUDIO = 'audio';
+    const TYPE_FILE = 'file';
+
     protected $fillable = ['sender_id', 'receiver_id', 'type', 'message', 'audio', 'chat_room_id'];
     protected $casts = [
         'created_at' => 'datetime:H:i'

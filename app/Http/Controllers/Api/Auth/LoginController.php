@@ -21,7 +21,7 @@ class LoginController extends Controller
             $user = $this->loginService->login($request['email'], $request['password']);
             $token = $this->loginService->createToken($user, $request['email']);
         } catch (\DomainException $exception) {
-            return response()->json(['status' => false,' error' => $exception->getMessage()]);
+            return response()->json(['status' => false,'error' => $exception->getMessage()]);
         }
 
         return response()->json([
