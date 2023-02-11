@@ -15,9 +15,7 @@ class CreateMessageAudioTable extends Migration
     {
         Schema::create('message_audio', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('message_id')->nullable();
-            $table->foreign('message_id')->references('id')->on('messages')
-                ->onDelete('cascade');
+            $table->foreignIdFor(\App\Models\Message::class)->constrained()->cascadeOnDelete();
             $table->string('audio');
 
             $table->timestamps();

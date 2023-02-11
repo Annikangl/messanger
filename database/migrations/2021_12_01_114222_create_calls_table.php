@@ -15,8 +15,8 @@ class CreateCallsTable extends Migration
     {
         Schema::create('calls', function (Blueprint $table) {
             $table->id();
-            $table->integer('sender_id')->unsigned();
-            $table->integer('receiver_id')->unsigned();
+            $table->unsignedBigInteger('sender_id');
+            $table->unsignedBigInteger('receiver_id');
             $table->smallInteger('status')->nullable();
             $table->time('duration')->nullable();
             $table->foreign('sender_id')->references('id')->on('users')->cascadeOnDelete();

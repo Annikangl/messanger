@@ -14,9 +14,9 @@ class CreateUsersChatRooms extends Migration
     public function up()
     {
         Schema::create('chat_room_user', function (Blueprint $table) {
-            $table->increments('id');
-            $table->integer('user_id')->unsigned();
-            $table->integer('chat_room_id')->unsigned();
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('chat_room_id');
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('chat_room_id')->references('id')->on('chat_rooms');
             $table->timestamps();
