@@ -103,7 +103,7 @@ class MessageController extends Controller
                 }
             } catch (\DomainException | \Exception $exception) {
                 return response()->json(['status' => false, 'error' => $exception->getMessage()])
-                    ->setStatusCode(500);
+                    ->setStatusCode(422);
             }
         }
 

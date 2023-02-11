@@ -162,6 +162,7 @@ class ChatSocket extends BaseSocket
             "created_at" => $message->created_at
         ];
 
+
         $this->broadcast($receivers, $responseData);
     }
 

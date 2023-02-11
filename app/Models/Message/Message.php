@@ -91,7 +91,7 @@ class Message extends Model
     public function setMessageAttribute($value): void
     {
         if (is_null($value)) {
-            $this->attributes['message'] = 'Голосовое сообщение';
+            $this->attributes['message'] = 'Р“РѕР»РѕСЃРѕРІРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ';
         } else {
             $this->attributes['message'] = $value;
         }

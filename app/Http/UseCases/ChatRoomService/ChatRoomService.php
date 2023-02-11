@@ -37,7 +37,7 @@ class ChatRoomService
                     'type' => Message::TYPE_MESSAGE,
                     'sender_id' => $sender_id,
                     'receiver_id' => $receiver_id,
-                    'message' => "Чат создан!",
+                    'message' => "Р§Р°С‚ СЃРѕР·РґР°РЅ!",
                     'audio' => null,
                     'chat_room_id' => $chatRoom->id
                 ];

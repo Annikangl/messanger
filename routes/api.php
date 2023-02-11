@@ -15,11 +15,11 @@ Route::get('message/download', [MessageController::class, 'download']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    Route::group(['prefix' => 'user','as' => 'user.'], function () {
+    Route::group(['prefix' => 'user', 'as' => 'user.'], function () {
         Route::get('/{id}/all', [UserController::class, 'index'])->name('index');
         Route::get('/{id}', [UserController::class, 'show'])->name('show');
         Route::get('/{id}/search/{username}', [UserController::class, 'searchUser'])
-            ->where('username','.*');
+            ->where('username', '.*');
         Route::get('/{id}/repository', [UserController::class, 'showFileList'])->name('repository');
     });
 
@@ -48,8 +48,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{messageId}/chatroom/{chatRoomId}/old', [MessageController::class, 'listLtId'])
             ->name('old-messages');
     });
-
-
 
 
     Route::post('/chat/{id}', [MessageController::class, 'store'])->middleware(['cors']);

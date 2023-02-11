@@ -85,7 +85,7 @@ class MessagesService
                     'sender_id' => $message['sender_id'],
                     'receiver_id' => $message['receiver_id'],
                     'type' => Message::TYPE_AUDIO,
-                    'message' => 'Голосове сообщение',
+                    'message' => 'Р“РѕР»РѕСЃРѕРІРµ СЃРѕРѕР±С‰РµРЅРёРµ',
                     'audio' => null,
                 ]);
 

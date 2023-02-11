@@ -2,65 +2,134 @@
 
 namespace App\Models;
 
-use Orchid\Platform\Models\User as Authenticatable;
+use App\Models\Message\File;
+use App\Models\Message\Message;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+/**
+ * @mixin Builder
+ *
+ * @property int id
+ * @property int socket_id
+ * @property string username
+ * @property string email
+ * @property string password
+ * @property int active
+ *
+ * @method static Builder|User query()
+ * @method Builder|Collection withChatRooms($userId)
+ */
+class  User extends Authenticatable
 {
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    use HasApiTokens, HasFactory, Notifiable;
+
+    const STATUS_ONLINE = 'Р’ СЃРµС‚Рё';
+    const STATUS_OFFLINE = 'РќРµ РІ СЃРµС‚Рё';
+
     protected $fillable = [
-        'name',
+        'socket_id',
+        'username',
         'email',
         'password',
-        'permissions',
+        'avatar',
+        'active'
     ];
 
-    /**
-     * The attributes excluded from the model's JSON form.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
-        'permissions',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
-        'permissions'          => 'array',
-        'email_verified_at'    => 'datetime',
+        'updated_at' => 'datetime:Y-m-d H:i:s'
     ];
 
-    /**
-     * The attributes for which you can use filters in url.
-     *
-     * @var array
-     */
-    protected $allowedFilters = [
-        'id',
-        'name',
-        'email',
-        'permissions',
-    ];
+    public function setOnline(): static
+    {
+        $this->active = self::STATUS_ONLINE;
+        $this->save();
+        return $this;
+    }
+
+    public function setOffline(): static
+    {
+        $this->active = self::STATUS_ONLINE;
+        $this->save();
+        return $this;
+    }
+
+    public static function getBaseFilePath(int $userId): string
+    {
+        return 'user-' . $userId . '/files/';
+    }
+
+    public static function getBaseAudioPath(int $userId): string
+    {
+        return 'user-' . $userId . '/audiomessages/';
+    }
+
+    public function chatRooms(): BelongsToMany
+    {
+        return $this->belongsToMany(ChatRoom::class, 'chat_room_user')
+            ->withTimestamps();
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class,'sender_id');
+    }
+
+    public function files(): HasManyThrough
+    {
+        return $this->hasManyThrough(File::class, Message::class, 'sender_id');
+    }
+
+    public function calls(): HasMany
+    {
+        return $this->hasMany(Call::class, 'sender_id', 'id');
+    }
+
 
     /**
-     * The attributes for which can use sort in url.
-     *
-     * @var array
+     * @param Builder $query
+     * @param $userId
+     * @return Collection
      */
-    protected $allowedSorts = [
-        'id',
-        'name',
-        'email',
-        'updated_at',
-        'created_at',
-    ];
+    public function scopeWithChatRooms(Builder $query, $userId): Collection
+    {
+        return $query->find($userId)->chatRooms->pluck('id');
+    }
+
+    /**
+     * Convert created_at to valid time
+     * @param $value
+     * @return string|null
+     */
+    public function getCreatedAtAttribute($value): ?string
+    {
+        return Carbon::createFromTimestamp(strtotime($value))
+            ->timezone(\Config::get('app.timezone'))
+            ->toDateTimeString();
+    }
+
+    /**
+     * Convert updated_at to valid time
+     * @param $value
+     * @return string|null
+     */
+    public function getUpdatedAtAttribute($value): ?string
+    {
+        return Carbon::createFromTimestamp(strtotime($value))
+            ->timezone(\Config::get('app.timezone'))
+            ->toDateTimeString();
+    }
 }
