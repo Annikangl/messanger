@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+    nginx:
+        build:
+            context: .
+            dockerfile: docker/Nginx.Dockerfile
+        ports:
+        -   8098:80
+        links:
+            -   php-fpm
+        depends_on:
+            -   php-fpm
+        volumes:
+        -   ./:/var/www/messanger
+
+    php-fpm:
+        build:
+            context: .
+            dockerfile: docker/Fpm.Dockerfile
+        volumes:
+        -   ./:/var/www/messanger
+        -   ./docker/php.ini:/usr/local/etc/php/php.ini
+        depends_on:
+            - mysql
+        environment:
+            - DB_PORT=3306
+            - DB_HOST=mysql
+
+    mysql:
+        image: mysql:5.7
+        restart: unless-stopped
+        ports:
+        -   33061:3306
+        volumes:
+        -   ./storage/docker/mysql:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=messanger_db
+            - TZ=Europe/Moscow
+        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-time-zone=+03:00']
+
+    phpmyadmin:
+        image: phpmyadmin:5.1.3
+        container_name: messanger_phpmyadmin
+        restart: always
+        ports:
+        -   8099:80
+        links:
+            -   mysql:mysql
+        environment:
+            - PMA_HOST=mysql
+#            - PMA_PORT=33061
+#            - PMA_USER=root
+#            - PMA_PASSWORD=root
+            - PMA_ARBITRARY=1
+            - PHP_UPLOAD_MAX_FILESIZE=100MB
+
+    redis:
+        image: redis:3
+        ports:
+        -   63791:6379
+
+    phpredisadmin:
+        image: erikdubbelboer/phpredisadmin
+        container_name: messanger_phpredisadmin
+        restart: always
+        ports:
+        -   8097:80
+        links:
+            -   redis:redis
+        environment:
+            - REDIS_1_HOST=redis
+            - REDIS_1_PORT=6379
+
